@@ -56,6 +56,7 @@ def mboard_client_main(args):
 
     # RPC Server's socket address
     server = (args.host,int(args.port))
+    has_joined_game = False
     try:
         mm_proxy = ServerProxy("http://%s:%d" % server)
     except KeyboardInterrupt:
@@ -111,24 +112,36 @@ def mboard_client_main(args):
                 server_name = raw_input('What would you like to call the server: ')
                 if proxy.create_game_server(server_name, nickname):
                     print 'Created new server %s' % str(server_name)
+                    # Handle this
+                    ships_ready = proxy.position_ships(server_name, nickname)
                     print 'Waiting for other players...'
                     while True:
+                        has_joined_game = server_name
                         sleep(3)
-                        players = proxy.get_players(server_name)
-                        if len(players) >= 3:
+                        players_ready = proxy.get_players_in_session(server_name)
+                        if len(players_ready) >= 3:
                             start = raw_input('Start game? (Y/n): ')
                             if start.lower() == 'y':
                                 proxy.start_game()
             else:
-                join_request = proxy.join_game_server(game_servers.keys()[int(game_choice)-1], nickname)
+                server_name = game_servers.keys()[int(game_choice)-1]
+                join_request = proxy.join_game_server(server_name, nickname)
                 if join_request:
+                    has_joined_game = server_name
                     print 'Successfully connected %s' % game_choice
-                    # Handle game start
+                    print 'Waiting for game to start'
+                    while True:
+                        game_active = proxy.game_active(server_name)
+                        if game_active:
+                            # start polling for my turn
+                            pass
                 else:
                     print 'Game already has a player with that nickname!'
         except Exception as e:
             LOG.error('Error %s ' % str(e))
 
+        if has_joined_game:
+            proxy.disconnect_game_server(has_joined_game, nickname)
     else:
         print 'No servers active, sorry.'
 
@@ -182,12 +195,5 @@ if __name__ == '__main__':
                         help='Server TCP port, '\
                         'defaults to %d' % DEFAULT_SERVER_PORT, \
                         default=DEFAULT_SERVER_PORT)
-    parser.add_argument('-m','--message',\
-                        help='Message to publish',\
-                        default='')
-    parser.add_argument('-l','--last', metavar='N', type=int,\
-                        help='Get iDs of last N messages,'\
-                        'defaults to "all"',\
-                        default=0)
     args = parser.parse_args()
     mboard_client_main(args)

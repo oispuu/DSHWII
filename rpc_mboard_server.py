@@ -9,6 +9,7 @@ from SimpleXMLRPCServer import SimpleXMLRPCRequestHandler
 from time import time
 from xmlrpclib import ServerProxy
 from argparse import ArgumentParser
+from game import *
 
 ___NAME = 'MBoard Client'
 ___VER = '0.2.0.0'
@@ -29,6 +30,8 @@ class MessageBoard():
         self.__m_board = {} # For storing published messages
         self.__m_uuid = 0   # For generating unique iDs
         self.available_game_servers = {}
+        self.active_games = []
+        self.game = Game()
 
     def __get_uuid(self):
         uuid = self.__m_uuid
@@ -38,7 +41,7 @@ class MessageBoard():
     def get_game_servers(self):
         return self.available_game_servers
 
-    def get_players(self, server_name):
+    def get_players_in_session(self, server_name):
         return self.available_game_servers[server_name]
 
     def create_game_server(self, server_name, player):
@@ -54,24 +57,38 @@ class MessageBoard():
             self.available_game_servers[server_name].append(player)
             return True
 
-    def start_game(self):
-        #Handle game start
+    def disconnect_game_server(self, server_name, player):
+        if player in self.available_game_servers[server_name]:
+            self.available_game_servers[server_name].remove(player)
+        if not self.available_game_servers[server_name]:
+            del self.available_game_servers[server_name]
+
+    def position_ships(self, server_name, player):
+        # This does not work yet, since only player is not sufficient
+        self.game.setUpBoard(player)
         return True
 
-    def publish(self,msg,source=('',-1)):
-        ip,port = source
-        t = time()
-        uuid = self.__get_uuid()
-        self.__m_board[uuid] = (uuid, t, ip, port, msg)
-        return uuid
+    def start_game(self, server_name):
+        self.active_games.append(server_name)
+        return True
 
-    def last(self,n=0):
-        ids = map(lambda x: x[:2], self.__m_board.values())
-        ids.sort(key=lambda x: x[1])
-        return map(lambda x: x[0],ids[n*-1:])
+    def game_active(self, server_name):
+        return server_name in self.active_games
 
-    def get(self,m_id):
-        return self.__m_board[m_id][1:]
+    # def publish(self,msg,source=('',-1)):
+    #     ip,port = source
+    #     t = time()
+    #     uuid = self.__get_uuid()
+    #     self.__m_board[uuid] = (uuid, t, ip, port, msg)
+    #     return uuid
+    #
+    # def last(self,n=0):
+    #     ids = map(lambda x: x[:2], self.__m_board.values())
+    #     ids.sort(key=lambda x: x[1])
+    #     return map(lambda x: x[0],ids[n*-1:])
+    #
+    # def get(self,m_id):
+    #     return self.__m_board[m_id][1:]
 
 # Restrict to a particular path.
 class MboardRequestHandler(SimpleXMLRPCRequestHandler):

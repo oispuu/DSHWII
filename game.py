@@ -77,16 +77,17 @@ class Game:
         column = raw_input("Column: ")
         player[enemy]
 
-def setUpGame(game,player):
-    while boats:
-        print(tabulate(game.setUpBoard(player.name)[player.name]))
+    def setUpGame(self, player):
+        while boats:
+            print(tabulate(self.setUpBoard(player.name)[player.name]))
 
-game = Game()
+# not needed just initiate from server
+# game = Game()
 #game.setUpGame()
 
-jaanus = Player("Jaanus")
-urmas = Player("Urmas")
-saarmas = Player("Saarmas")
+# jaanus = Player("Jaanus")
+# urmas = Player("Urmas")
+# saarmas = Player("Saarmas")
 
-setUpGame(game,jaanus)
-print(game.getPlayerList())
+# setUpGame(game,jaanus)
+# print(game.getPlayerList())
