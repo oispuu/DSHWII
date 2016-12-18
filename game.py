@@ -1,4 +1,5 @@
 from tabulate import tabulate
+import weakref
 
 boats = {
     "destroyer": 2,
@@ -9,6 +10,8 @@ boats = {
 }
 
 class Player:
+    players = []
+
     def createPlayer(self, nickName):
         player = {}
         player[nickName] = [[0 for row in range(12)] for column in range(10)]
@@ -16,6 +19,11 @@ class Player:
             row[0] = "|"
             row[11] = "|"
         return player
+
+    def __init__(self,name=None):
+        self.__class__.players.append(weakref.proxy(self))
+        self.name = name
+
 
 class Board:
     def addBoat(self,nickName):
@@ -45,7 +53,6 @@ class Board:
                 startX = int(raw_input("Select starting X coordinate (1-10): "))
                 startY = int(raw_input("Select starting Y coordinate (1-10): "))
 
-
         size = boats[boatType]
         counter = 0
         if orientation.lower() == "horizontal":
@@ -61,12 +68,29 @@ class Board:
         del boats[boatType]
         return board
 
-def setUpGame():
-    player = Player()
-    nickName = raw_input("Enter your nickname: ")
-    player = player.createPlayer(nickName)
-    board = Board()
-    while boats:
-        print(tabulate(board.addBoat(player)[0]))
+class Game:
+    def playerList(self):
+        playerList = []
+        for instance in Player.players:
+            playerList.append(instance.name)
+        return playerList
 
-setUpGame()
+    def shoot(self, player, enemy, row, column):
+        enemy = raw_input("Select enemy to shoot: " + str())
+
+    def setUpGame(self):
+        player = Player()
+        nickName = raw_input("Enter your nickname: ")
+        player = player.createPlayer(nickName)
+        board = Board()
+        while boats:
+            print(tabulate(board.addBoat(player)[0]))
+
+game = Game()
+#game.setUpGame()
+
+jaanus = Player("Jaanus")
+urmas = Player("Urmas")
+saarmas = Player("Saarmas")
+
+print(game.playerList())
