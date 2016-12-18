@@ -8,6 +8,20 @@ from SimpleXMLRPCServer import SimpleXMLRPCServer
 from SimpleXMLRPCServer import SimpleXMLRPCRequestHandler
 from time import time
 from xmlrpclib import ServerProxy
+from argparse import ArgumentParser
+
+___NAME = 'MBoard Client'
+___VER = '0.2.0.0'
+___DESC = 'Simple Message Board Client (RPC version)'
+___BUILT = '2016-10-27'
+___VENDOR = 'Copyright (c) 2016 DSLab'
+
+DEFAULT_SERVER_PORT = 7778
+DEFAULT_SERVER_INET_ADDR = '127.0.0.1'
+
+def __info():
+    return '%s version %s (%s) %s' % (___NAME, ___VER, ___BUILT, ___VENDOR)
+
 
 class MessageBoard():
 
@@ -39,9 +53,9 @@ class MessageBoard():
 class MboardRequestHandler(SimpleXMLRPCRequestHandler):
     rpc_paths = ('/RPC2',)
 
-if __name__ == '__main__':
+def mboard_server_main(args):
     mboard = MessageBoard()
-    server_sock = ('127.0.0.1', 7778)
+    server_sock = (str(args.host), int(args.port))
 
     print 'Server created on %s' % str(server_sock)
 
@@ -80,3 +94,16 @@ if __name__ == '__main__':
         server.server_close()   # Close the sockets
     print 'Terminating ...'
 
+if __name__ == '__main__':
+    parser = ArgumentParser(description=__info(),
+                            version = ___VER)
+    parser.add_argument('-H','--host',\
+                        help='Server INET address '\
+                        'defaults to %s' % DEFAULT_SERVER_INET_ADDR, \
+                        default=DEFAULT_SERVER_INET_ADDR)
+    parser.add_argument('-p','--port', type=int,\
+                        help='Server TCP port, '\
+                        'defaults to %d' % DEFAULT_SERVER_PORT, \
+                        default=DEFAULT_SERVER_PORT)
+    args = parser.parse_args()
+    mboard_server_main(args)
