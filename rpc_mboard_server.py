@@ -28,11 +28,35 @@ class MessageBoard():
     def __init__(self):
         self.__m_board = {} # For storing published messages
         self.__m_uuid = 0   # For generating unique iDs
+        self.available_game_servers = {}
 
     def __get_uuid(self):
         uuid = self.__m_uuid
         self.__m_uuid += 1
         return uuid
+
+    def get_game_servers(self):
+        return self.available_game_servers
+
+    def get_players(self, server_name):
+        return self.available_game_servers[server_name]
+
+    def create_game_server(self, server_name, player):
+        self.available_game_servers[server_name] = [player]
+        print 'Created a game server %s for player %s' % (server_name, player)
+        print '%s' % self.available_game_servers[server_name]
+        return True
+
+    def join_game_server(self, server_name, player):
+        if player in self.available_game_servers[server_name]:
+            return False
+        else:
+            self.available_game_servers[server_name].append(player)
+            return True
+
+    def start_game(self):
+        #Handle game start
+        return True
 
     def publish(self,msg,source=('',-1)):
         ip,port = source

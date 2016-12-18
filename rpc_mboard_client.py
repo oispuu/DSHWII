@@ -4,13 +4,15 @@ Created on Oct 27, 2016
 @author: devel
 '''
 import logging
+from collections import OrderedDict
+
 FORMAT = '%(asctime)-15s %(levelname)s %(message)s'
 logging.basicConfig(level=logging.DEBUG,format=FORMAT)
 LOG = logging.getLogger()
 from argparse import ArgumentParser
 from sys import stdin, exit
 from xmlrpclib import ServerProxy
-from time import asctime, localtime
+from time import asctime, localtime, sleep
 
 # Constants -------------------------------------------------------------------
 ___NAME = 'MBoard Client'
@@ -63,31 +65,72 @@ def mboard_client_main(args):
         LOG.error('Communication error %s ' % str(e))
         exit(1)
 
-    LOG.info('Connected to Mboard XMLRPC server!')
-    methods = filter(lambda x: 'system.' not in x, mm_proxy.system.listMethods())
-    LOG.debug('Remote methods are: [%s] ' % (', '.join(methods)))
-
     available_servers = mm_proxy.get_available_servers()
-    print 'Pick a server (insert index): \n'
-    j = 1
-    for i in available_servers:
-        print '%d. %s \n' % (j, str(i))
-        j += 1
+    if available_servers:
+        print 'Pick a server (insert index): \n'
+        j = 1
+        for i in available_servers:
+            print '%d. %s \n' % (j, str(i))
+            j += 1
+        server_choice = raw_input()
+        server_choice = available_servers[int(server_choice) - 1]
 
-    server_choice = raw_input()
-    server_choice = available_servers[int(server_choice)-1]
+        print 'Server choice was %s' % str(server_choice)
 
-    print 'Server choice was %s' % str(server_choice)
+        try:
+            proxy = ServerProxy("http://%s:%d" % tuple(server_choice))
+            LOG.info('Connected to %s' % str(server_choice))
+        except KeyboardInterrupt:
+            LOG.warn('Ctrl+C issued, terminating')
+            exit(0)
+        except Exception as e:
+            LOG.error('Communication error %s ' % str(e))
+            exit(1)
 
-    try:
-        proxy = ServerProxy("http://%s:%d" % tuple(server_choice))
-        LOG.info('Connected to %s' % str(server_choice))
-    except KeyboardInterrupt:
-        LOG.warn('Ctrl+C issued, terminating')
-        exit(0)
-    except Exception as e:
-        LOG.error('Communication error %s ' % str(e))
-        exit(1)
+        LOG.info('Connected to Mboard XMLRPC server!')
+        methods = filter(lambda x: 'system.' not in x, proxy.system.listMethods())
+        LOG.debug('Remote methods are: [%s] ' % (', '.join(methods)))
+
+        nickname = raw_input('Please enter a nickname: ')
+        try:
+            game_servers = proxy.get_game_servers()
+            OrderedDict(sorted(game_servers.items(), key=lambda t: t[0]))
+            if game_servers:
+                j = 1
+                print 'The available game servers are: '
+                for i in game_servers.keys():
+                    print '%d. %s' % (j, i)
+                    for k in game_servers[str(i)]:
+                        print '%s' % str(k)
+                    j += 1
+            else:
+                print 'No game servers available!'
+            game_choice = raw_input('Insert server index or press 0 to create a new game server: ')
+
+            if int(game_choice) == 0:
+                server_name = raw_input('What would you like to call the server: ')
+                if proxy.create_game_server(server_name, nickname):
+                    print 'Created new server %s' % str(server_name)
+                    print 'Waiting for other players...'
+                    while True:
+                        sleep(3)
+                        players = proxy.get_players(server_name)
+                        if len(players) >= 3:
+                            start = raw_input('Start game? (Y/n): ')
+                            if start.lower() == 'y':
+                                proxy.start_game()
+            else:
+                join_request = proxy.join_game_server(game_servers.keys()[int(game_choice)-1], nickname)
+                if join_request:
+                    print 'Successfully connected %s' % game_choice
+                    # Handle game start
+                else:
+                    print 'Game already has a player with that nickname!'
+        except Exception as e:
+            LOG.error('Error %s ' % str(e))
+
+    else:
+        print 'No servers active, sorry.'
 
     ids = []
     msgs = []
