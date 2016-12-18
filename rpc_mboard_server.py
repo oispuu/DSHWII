@@ -7,6 +7,7 @@ Created on Oct 27, 2016
 from SimpleXMLRPCServer import SimpleXMLRPCServer
 from SimpleXMLRPCServer import SimpleXMLRPCRequestHandler
 from time import time
+from xmlrpclib import ServerProxy
 
 class MessageBoard():
 
@@ -40,12 +41,31 @@ class MboardRequestHandler(SimpleXMLRPCRequestHandler):
 
 if __name__ == '__main__':
     mboard = MessageBoard()
-    server_sock = ('127.0.0.1',7777)
+    server_sock = ('127.0.0.1', 7778)
+
+    print 'Server created on %s' % str(server_sock)
 
     # Create XML_server
     server = SimpleXMLRPCServer(server_sock,
                             requestHandler=MboardRequestHandler)
     server.register_introspection_functions()
+
+    # get to middleman
+    mm_server = ('127.0.0.1', 7777)
+    try:
+        middleman = ServerProxy("http://%s:%d" % mm_server)
+        print 'Got middleman up'
+    except KeyboardInterrupt:
+        print 'Ctrl+C issued, terminating'
+        exit(0)
+    except Exception as e:
+        print 'Communication error %s ' % str(e)
+        exit(1)
+
+    result = middleman.notify_server_up(server_sock)
+
+    if result:
+        print 'Notified middleman'
 
     # Register all functions of the Mboard instance
     server.register_instance(mboard)
@@ -55,6 +75,7 @@ if __name__ == '__main__':
     except KeyboardInterrupt:
         print 'Ctrl+C issued, terminating ...'
     finally:
+        middleman.notify_server_down(server_sock)
         server.shutdown()       # Stop the serve-forever loop
         server.server_close()   # Close the sockets
     print 'Terminating ...'

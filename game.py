@@ -24,26 +24,26 @@ class Board:
         boatType = raw_input("Select boat type: " + str(boats.keys()) + " ")
         orientation = raw_input("Select orientation (horizontal, vertical): ")
 
-        startX = int(raw_input("Select starting X coordinate (0-10): "))
+        startX = int(raw_input("Select starting X coordinate (1-10): "))
         while startX + boats[boatType] - 1 > 10 and orientation == "vertical":
             print("Invalid X coordinate, try again")
-            startX = int(raw_input("Select starting X coordinate (0-10): "))
+            startX = int(raw_input("Select starting X coordinate (1-10): "))
 
-        startY = int(raw_input("Select starting Y coordinate (0-10): "))
+        startY = int(raw_input("Select starting Y coordinate (1-10): "))
         while startY + boats[boatType] - 1 > 10 and orientation == "horizontal":
             print("Invalid Y coordinate, try again")
-            startY = int(raw_input("Select starting X coordinate (0-10): "))
+            startY = int(raw_input("Select starting X coordinate (1-10): "))
 
         # check if the place is still free
         for i in range(0,boats[boatType]):
             while orientation == "horizontal" and board[0][startX - 1][startY + i] == 1:
                 print("Place already taken, try again")
-                startX = int(raw_input("Select starting X coordinate (0-10): "))
-                startY = int(raw_input("Select starting Y coordinate (0-10): "))
+                startX = int(raw_input("Select starting X coordinate (1-10): "))
+                startY = int(raw_input("Select starting Y coordinate (1-10): "))
             while orientation == "vertical" and board[0][startX + i - 1][startY] == 1:
                 print("Place already taken, try again")
-                startX = int(raw_input("Select starting X coordinate (0-10): "))
-                startY = int(raw_input("Select starting Y coordinate (0-10): "))
+                startX = int(raw_input("Select starting X coordinate (1-10): "))
+                startY = int(raw_input("Select starting Y coordinate (1-10): "))
 
 
         size = boats[boatType]
