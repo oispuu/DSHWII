@@ -69,14 +69,16 @@ class Board:
         return board
 
 class Game:
-    def playerList(self):
+    def getPlayerList(self):
         playerList = []
         for instance in Player.players:
             playerList.append(instance.name)
         return playerList
 
-    def shoot(self, player, enemy, row, column):
-        enemy = raw_input("Select enemy to shoot: " + str())
+    def shoot(self, player, row, column):
+        enemy = raw_input("Select enemy to shoot: " + str(self.getPlayerList()))
+        row = raw_input("Row: ")
+        column = raw_input("Column: ")
 
     def setUpGame(self):
         player = Player()
@@ -93,4 +95,4 @@ jaanus = Player("Jaanus")
 urmas = Player("Urmas")
 saarmas = Player("Saarmas")
 
-print(game.playerList())
+print(game.shoot("Jaana",3,3))
