@@ -22,9 +22,17 @@ class Board:
         board = nickName.values()
 
         boatType = raw_input("Select boat type: " + str(boats.keys()) + " ")
-        startX = int(raw_input("Select starting X coordinate (0-10): "))
-        startY = int(raw_input("Select starting Y coordinate (0-10): "))
         orientation = raw_input("Select orientation (horizontal, vertical): ")
+
+        startX = int(raw_input("Select starting X coordinate (0-10): "))
+        while startX + boats[boatType] - 1 > 10 and orientation == "vertical":
+            print("Invalid X coordinate, try again")
+            startX = int(raw_input("Select starting X coordinate (0-10): "))
+
+        startY = int(raw_input("Select starting Y coordinate (0-10): "))
+        while startY + boats[boatType] - 1 > 10 and orientation == "horizontal":
+            print("Invalid Y coordinate, try again")
+            startY = int(raw_input("Select starting X coordinate (0-10): "))
 
         # check if the place is still free
         for i in range(0,boats[boatType]):
