@@ -111,6 +111,7 @@ def mboard_client_main(args):
 
             if int(game_choice) == 0:
                 server_name = raw_input('What would you like to call the server: ')
+                board_setup = None
                 if proxy.create_game_server(server_name, nickname):
                     print 'Created new server %s' % str(server_name)
 
@@ -146,7 +147,11 @@ def mboard_client_main(args):
                                 start_x = int(raw_input("Select starting X coordinate (1-10): "))
                                 start_y = int(raw_input("Select starting Y coordinate (1-10): "))
 
-                        board_setup = proxy.set_up_board(server_name, nickname, selected_boat, orientation, start_x, start_y)
+                        if board_setup:
+                            board_setup = proxy.set_up_board(server_name, nickname, selected_boat, orientation, start_x, start_y, board_setup)
+                        else:
+                            board_setup = proxy.set_up_board(server_name, nickname, selected_boat, orientation, start_x,
+                                                             start_y)
                         print(tabulate(board_setup))
                         del boats[selected_boat]
                     print 'Waiting for other players...'

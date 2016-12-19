@@ -64,9 +64,12 @@ class Game:
         #         startX = int(raw_input("Select starting X coordinate (1-10): "))
         #         startY = int(raw_input("Select starting Y coordinate (1-10): "))
 
-    def set_up_board(self, nick_name, boat_type, orientation, start_x, start_y):
+    def set_up_board(self, nick_name, boat_type, orientation, start_x, start_y, board=None):
         boats = self.boats.copy()
-        board = copy.deepcopy(self.board)
+        if not board:
+            board = copy.deepcopy(self.board)
+        else:
+            board = self.players[nick_name]
         size = boats[boat_type]
         counter = 0
         if orientation.lower() == "horizontal":
@@ -141,8 +144,8 @@ class MessageBoard():
                 return False
         return True
 
-    def set_up_board(self, server_name, player, boat_type, orientation, start_x, start_y):
-        return self.games_initialized[server_name].set_up_board(player, boat_type, orientation, start_x, start_y)
+    def set_up_board(self, server_name, player, boat_type, orientation, start_x, start_y, board=None):
+        return self.games_initialized[server_name].set_up_board(player, boat_type, orientation, start_x, start_y, board)
 
     def join_game_server(self, server_name, player):
         if player in self.available_game_servers[server_name]:
