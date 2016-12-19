@@ -176,6 +176,7 @@ def mboard_client_main(args):
                     print 'Successfully connected %s' % game_choice
 
                     boats = proxy.get_boats(server_name, nickname)
+                    board_setup = None
                     while boats:
                         selected_boat = raw_input("Select boat type (" + str(boats.keys()) + "): ")
 
@@ -207,7 +208,11 @@ def mboard_client_main(args):
                                 start_x = int(raw_input("Select starting X coordinate (1-10): "))
                                 start_y = int(raw_input("Select starting Y coordinate (1-10): "))
 
-                        board_setup = proxy.set_up_board(server_name, nickname, selected_boat, orientation, start_x, start_y)
+                        if board_setup:
+                            board_setup = proxy.set_up_board(server_name, nickname, selected_boat, orientation, start_x, start_y, board_setup)
+                        else:
+                            board_setup = proxy.set_up_board(server_name, nickname, selected_boat, orientation, start_x,
+                                                             start_y)
                         print(tabulate(board_setup))
                         del boats[selected_boat]
                     print 'Waiting for game to start'
