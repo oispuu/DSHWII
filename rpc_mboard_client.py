@@ -13,6 +13,7 @@ from argparse import ArgumentParser
 from sys import stdin, exit
 from xmlrpclib import ServerProxy
 from time import asctime, localtime, sleep
+from tabulate import tabulate
 
 # Constants -------------------------------------------------------------------
 ___NAME = 'MBoard Client'
@@ -112,8 +113,48 @@ def mboard_client_main(args):
                 server_name = raw_input('What would you like to call the server: ')
                 if proxy.create_game_server(server_name, nickname):
                     print 'Created new server %s' % str(server_name)
-                    # Handle this
-                    ships_ready = proxy.position_ships(server_name, nickname)
+
+                    boats = proxy.get_boats(server_name, nickname)
+                    while boats:
+                        selected_boat = raw_input("Select boat type (" + str(boats.keys()) + "): ")
+
+                        if selected_boat.isdigit() and int(selected_boat) < len(boats.keys()):
+                            selected_boat = boats.keys()[int(selected_boat)]
+
+                        orientation = raw_input("Select orientation (horizontal, vertical) or (h, v): ")
+
+                        if orientation == "h":
+                            orientation = "horizontal"
+                        elif orientation == "v":
+                            orientation = "vertical"
+
+                        start_x = int(raw_input("Select starting X coordinate (1-10): "))
+                        while start_x + boats[selected_boat] - 1 > 10 and orientation == "vertical":
+                            print("Invalid X coordinate, try again")
+                            start_x = int(raw_input("Select starting X coordinate (1-10): "))
+
+                        start_y = int(raw_input("Select starting Y coordinate (1-10): "))
+                        while start_y + boats[selected_boat] - 1 > 10 and orientation == "horizontal":
+                            print("Invalid Y coordinate, try again")
+                            start_y = int(raw_input("Select starting Y coordinate (1-10): "))
+
+                        checks_out = False
+                        while not checks_out:
+                            checks_out = proxy.check_position(server_name, selected_boat, orientation, start_x, start_y)
+                            if not checks_out:
+                                print("Place already taken, try again")
+                                start_x = int(raw_input("Select starting X coordinate (1-10): "))
+                                start_y = int(raw_input("Select starting Y coordinate (1-10): "))
+
+                        board_setup = proxy.set_up_board(server_name, nickname, selected_boat, orientation, start_x, start_y)
+                        print(tabulate(board_setup))
+                        del boats[selected_boat]
+
+                    # text, boats, board = proxy.set_up_game(server_name, nickname)
+                    # while boats:
+                    #     tabulate(text)
+                    #     text, boats, board = proxy.set_up_game(server_name, nickname, boats, board)
+                    # tabulate(text)
                     print 'Waiting for other players...'
                     while True:
                         has_joined_game = server_name
@@ -129,6 +170,11 @@ def mboard_client_main(args):
                 if join_request:
                     has_joined_game = server_name
                     print 'Successfully connected %s' % game_choice
+                    text, boats, board = proxy.set_up_game(server_name, nickname)
+                    while boats:
+                        tabulate(text)
+                        text, boats, board = proxy.set_up_game(server_name, nickname, boats, board)
+                    tabulate(text)
                     print 'Waiting for game to start'
                     while True:
                         game_active = proxy.game_active(server_name)

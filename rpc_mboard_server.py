@@ -9,7 +9,6 @@ from SimpleXMLRPCServer import SimpleXMLRPCRequestHandler
 from time import time
 from xmlrpclib import ServerProxy
 from argparse import ArgumentParser
-from game import *
 
 ___NAME = 'MBoard Client'
 ___VER = '0.2.0.0'
@@ -24,14 +23,91 @@ def __info():
     return '%s version %s (%s) %s' % (___NAME, ___VER, ___BUILT, ___VENDOR)
 
 
+class Game:
+    def __init__(self):
+        self.boats = {
+            "destroyer": 2,
+            "submarine": 3,
+            "cruiser": 3,
+            "battleship": 4,
+            "carrier": 5
+        }
+        self.board = [[0 for row in range(12)] for column in range(10)]
+        self.players = {}
+        for row in self.board:
+            row[0] = "|"
+            row[11] = "|"
+
+    # def setUpBoard(self, nick_name, boats, board):
+        # boatType = raw_input("Select boat type (" + str(boats.keys()) + "): ")
+        # orientation = raw_input("Select orientation (horizontal, vertical): ")
+        #
+        # startX = int(raw_input("Select starting X coordinate (1-10): "))
+        # while startX + boats[boatType] - 1 > 10 and orientation == "vertical":
+        #     print("Invalid X coordinate, try again")
+        #     startX = int(raw_input("Select starting X coordinate (1-10): "))
+        #
+        # startY = int(raw_input("Select starting Y coordinate (1-10): "))
+        # while startY + boats[boatType] - 1 > 10 and orientation == "horizontal":
+        #     print("Invalid Y coordinate, try again")
+        #     startY = int(raw_input("Select starting Y coordinate (1-10): "))
+        #
+        # # check if the place is still free
+        # for i in range(0,boats[boatType]):
+        #     while orientation == "horizontal" and board[startX - 1][startY + i] == 1:
+        #         print("Place already taken, try again")
+        #         startX = int(raw_input("Select starting X coordinate (1-10): "))
+        #         startY = int(raw_input("Select starting Y coordinate (1-10): "))
+        #     while orientation == "vertical" and board[startX + i - 1][startY] == 1:
+        #         print("Place already taken, try again")
+        #         startX = int(raw_input("Select starting X coordinate (1-10): "))
+        #         startY = int(raw_input("Select starting Y coordinate (1-10): "))
+
+    def set_up_board(self, nick_name, boat_type, orientation, start_x, start_y):
+        boats = self.boats.copy()
+        board = list(self.board)
+        size = boats[boat_type]
+        counter = 0
+        if orientation.lower() == "horizontal":
+            while counter < size:
+                board[start_x-1][start_y] = 1
+                start_y += 1
+                counter += 1
+        if orientation.lower() == "vertical":
+            while counter < size:
+                board[start_x-1][start_y] = 1
+                start_x += 1
+                counter += 1
+        del boats[boat_type]
+        self.players[nick_name] = board
+        return board
+
+    def get_player_board(self, nick_name):
+        return self.players[nick_name]
+
+    # def getPlayerList(self):
+    #     playerList = []
+    #     for instance in Player.players:
+    #         playerList.append(instance.name)
+    #     return playerList
+
+    def shootAndValidate(self, player, row, column):
+        enemy = raw_input("Select enemy to shoot: " + str(self.getPlayerList()))
+        row = raw_input("Row: ")
+        column = raw_input("Column: ")
+        player[enemy]
+
+
 class MessageBoard():
 
     def __init__(self):
         self.__m_board = {} # For storing published messages
         self.__m_uuid = 0   # For generating unique iDs
+        # Holds the players
         self.available_game_servers = {}
+        # Holds the game object
+        self.games_initialized = {}
         self.active_games = []
-        self.game = Game()
 
     def __get_uuid(self):
         uuid = self.__m_uuid
@@ -45,10 +121,27 @@ class MessageBoard():
         return self.available_game_servers[server_name]
 
     def create_game_server(self, server_name, player):
+        # Stupid logic, I have 1 dict for players and another one to identify the game object.
         self.available_game_servers[server_name] = [player]
+        self.games_initialized[server_name] = Game()
         print 'Created a game server %s for player %s' % (server_name, player)
-        print '%s' % self.available_game_servers[server_name]
         return True
+
+    def get_boats(self, server_name, player):
+        return self.games_initialized[server_name].boats.copy()
+
+    def check_position(self, server_name, boat_type, orientation, start_x, start_y):
+        boats = self.games_initialized[server_name].boats.copy()
+        board = list(self.games_initialized[server_name].board)
+        for i in range(0,boats[boat_type]):
+            while orientation == "horizontal" and board[start_x - 1][start_y + i] == 1:
+                return False
+            while orientation == "vertical" and board[start_x + i - 1][start_y] == 1:
+                return False
+        return True
+
+    def set_up_board(self, server_name, player, boat_type, orientation, start_x, start_y):
+        return self.games_initialized[server_name].set_up_board(player, boat_type, orientation, start_x, start_y)
 
     def join_game_server(self, server_name, player):
         if player in self.available_game_servers[server_name]:
@@ -62,11 +155,6 @@ class MessageBoard():
             self.available_game_servers[server_name].remove(player)
         if not self.available_game_servers[server_name]:
             del self.available_game_servers[server_name]
-
-    def position_ships(self, server_name, player):
-        # This does not work yet, since only player is not sufficient
-        self.game.setUpBoard(player)
-        return True
 
     def start_game(self, server_name):
         self.active_games.append(server_name)
