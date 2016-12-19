@@ -9,6 +9,7 @@ from SimpleXMLRPCServer import SimpleXMLRPCRequestHandler
 from time import time
 from xmlrpclib import ServerProxy
 from argparse import ArgumentParser
+import copy
 
 ___NAME = 'MBoard Client'
 ___VER = '0.2.0.0'
@@ -26,11 +27,11 @@ def __info():
 class Game:
     def __init__(self):
         self.boats = {
-            "destroyer": 2,
-            "submarine": 3,
-            "cruiser": 3,
-            "battleship": 4,
-            "carrier": 5
+            "destroyer[2]": 2,
+            "submarine[3]": 3,
+            "cruiser[3]": 3,
+            "battleship[4]": 4,
+            "carrier[5]": 5
         }
         self.board = [[0 for row in range(12)] for column in range(10)]
         self.players = {}
@@ -65,7 +66,7 @@ class Game:
 
     def set_up_board(self, nick_name, boat_type, orientation, start_x, start_y):
         boats = self.boats.copy()
-        board = list(self.board)
+        board = copy.deepcopy(self.board)
         size = boats[boat_type]
         counter = 0
         if orientation.lower() == "horizontal":
@@ -132,7 +133,7 @@ class MessageBoard():
 
     def check_position(self, server_name, boat_type, orientation, start_x, start_y):
         boats = self.games_initialized[server_name].boats.copy()
-        board = list(self.games_initialized[server_name].board)
+        board = copy.deepcopy(self.games_initialized[server_name].board)
         for i in range(0,boats[boat_type]):
             while orientation == "horizontal" and board[start_x - 1][start_y + i] == 1:
                 return False
@@ -156,27 +157,34 @@ class MessageBoard():
         if not self.available_game_servers[server_name]:
             del self.available_game_servers[server_name]
 
-    def start_game(self, server_name):
-        self.active_games.append(server_name)
-        return True
+    def start_game(self, server_name, nickname):
+        checksum = 0
+        for player in self.available_game_servers[server_name].players.keys():
+            checksum += sum(self.games_initialized[server_name].players[player])
+
+        if checksum == len(self.available_game_servers[server_name].players)*17:
+            if nickname == self.available_game_servers[server_name][0]:
+                self.active_games.append({server_name: self.available_game_servers[server_name][0]})
+                return True
+            else:
+                print "Error starting game!!"
+                return False
+        else:
+            return False
+
+    def poll_game_start(self, server_name):
+        return True if self.active_games[server_name] else False
+
+    def poll_my_turn(self, server_name, nickname):
+        return self.active_games[server_name] == nickname, nickname in self.available_game_servers[server_name]
+
+    def choose_opponents(self, server_name, nickname):
+        opponents = copy.deepcopy(self.available_game_servers[server_name])
+        return opponents.remove(nickname)
 
     def game_active(self, server_name):
-        return server_name in self.active_games
+        return True if self.games_initialized[server_name] else False
 
-    # def publish(self,msg,source=('',-1)):
-    #     ip,port = source
-    #     t = time()
-    #     uuid = self.__get_uuid()
-    #     self.__m_board[uuid] = (uuid, t, ip, port, msg)
-    #     return uuid
-    #
-    # def last(self,n=0):
-    #     ids = map(lambda x: x[:2], self.__m_board.values())
-    #     ids.sort(key=lambda x: x[1])
-    #     return map(lambda x: x[0],ids[n*-1:])
-    #
-    # def get(self,m_id):
-    #     return self.__m_board[m_id][1:]
 
 # Restrict to a particular path.
 class MboardRequestHandler(SimpleXMLRPCRequestHandler):

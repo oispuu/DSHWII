@@ -149,12 +149,6 @@ def mboard_client_main(args):
                         board_setup = proxy.set_up_board(server_name, nickname, selected_boat, orientation, start_x, start_y)
                         print(tabulate(board_setup))
                         del boats[selected_boat]
-
-                    # text, boats, board = proxy.set_up_game(server_name, nickname)
-                    # while boats:
-                    #     tabulate(text)
-                    #     text, boats, board = proxy.set_up_game(server_name, nickname, boats, board)
-                    # tabulate(text)
                     print 'Waiting for other players...'
                     while True:
                         has_joined_game = server_name
@@ -163,24 +157,74 @@ def mboard_client_main(args):
                         if len(players_ready) >= 3:
                             start = raw_input('Start game? (Y/n): ')
                             if start.lower() == 'y':
-                                proxy.start_game()
+                                start = proxy.start_game()
+                                if start:
+                                    opponents = proxy.choose_opponent(server_name, nickname)
+                                    print str(opponents)
+                                    opponent_choice = raw_input('Choose opponent (1-%d)' % len(opponents))
+                                    # Start choosing coordinates
             else:
                 server_name = game_servers.keys()[int(game_choice)-1]
                 join_request = proxy.join_game_server(server_name, nickname)
                 if join_request:
                     has_joined_game = server_name
                     print 'Successfully connected %s' % game_choice
-                    text, boats, board = proxy.set_up_game(server_name, nickname)
+
+                    boats = proxy.get_boats(server_name, nickname)
                     while boats:
-                        tabulate(text)
-                        text, boats, board = proxy.set_up_game(server_name, nickname, boats, board)
-                    tabulate(text)
+                        selected_boat = raw_input("Select boat type (" + str(boats.keys()) + "): ")
+
+                        if selected_boat.isdigit() and int(selected_boat) < len(boats.keys()):
+                            selected_boat = boats.keys()[int(selected_boat)]
+
+                        orientation = raw_input("Select orientation (horizontal, vertical) or (h, v): ")
+
+                        if orientation == "h":
+                            orientation = "horizontal"
+                        elif orientation == "v":
+                            orientation = "vertical"
+
+                        start_x = int(raw_input("Select starting X coordinate (1-10): "))
+                        while start_x + boats[selected_boat] - 1 > 10 and orientation == "vertical":
+                            print("Invalid X coordinate, try again")
+                            start_x = int(raw_input("Select starting X coordinate (1-10): "))
+
+                        start_y = int(raw_input("Select starting Y coordinate (1-10): "))
+                        while start_y + boats[selected_boat] - 1 > 10 and orientation == "horizontal":
+                            print("Invalid Y coordinate, try again")
+                            start_y = int(raw_input("Select starting Y coordinate (1-10): "))
+
+                        checks_out = False
+                        while not checks_out:
+                            checks_out = proxy.check_position(server_name, selected_boat, orientation, start_x, start_y)
+                            if not checks_out:
+                                print("Place already taken, try again")
+                                start_x = int(raw_input("Select starting X coordinate (1-10): "))
+                                start_y = int(raw_input("Select starting Y coordinate (1-10): "))
+
+                        board_setup = proxy.set_up_board(server_name, nickname, selected_boat, orientation, start_x, start_y)
+                        print(tabulate(board_setup))
+                        del boats[selected_boat]
                     print 'Waiting for game to start'
                     while True:
                         game_active = proxy.game_active(server_name)
                         if game_active:
-                            # start polling for my turn
-                            pass
+                            print 'Game is really active'
+                            game_started = proxy.poll_game_start(server_name)
+                            while not game_started:
+                                sleep(3)
+                                game_started = proxy.poll_game_start(server_name)
+                            print 'Game has started'
+                            my_turn, connected = proxy.poll_my_turn(server_name, nickname)
+                            while connected:
+                                while not my_turn:
+                                    sleep(3)
+                                    my_turn, connected = proxy.poll_my_turn(server_name, nickname)
+                                print 'My turn'
+                                opponents = proxy.choose_opponent(server_name, nickname)
+                                print str(opponents)
+                                opponent_choice = raw_input('Choose opponent (1-%d)' % len(opponents))
+                                # Choose coordinates here
                 else:
                     print 'Game already has a player with that nickname!'
         except Exception as e:
