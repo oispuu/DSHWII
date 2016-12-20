@@ -87,8 +87,8 @@ class Game:
         self.players[nick_name] = board
         return board
 
-    def get_player_board(self, nick_name):
-        return self.players[nick_name]
+    def get_player_board(self, opponent_name, nick_name):
+        return self.players[opponent_name]
 
     def update_player_board(self, nick_name, new_board):
         self.players[nick_name] = new_board
@@ -181,13 +181,15 @@ class MessageBoard():
         board = self.games_initialized[server_name].get_player_board(nickname)
         if board[coordX-1][coordY] == 1:
             board[coordX-1][coordY] = "X"
-            self.games_initialized[server_name].update_player_board(nickname, copy.deepcopy(board))
+            self.games_initialized[server_name].update_player_board(opponent_name, nickname, copy.deepcopy(board))
+            return True
+        if board[coordX - 1][coordY] == "X":
             return True
         else:
             return False
 
-    def get_obfuscated_boards(self, server_name, nickname):
-        board = self.games_initialized[server_name].get_player_board(nickname)
+    def get_obfuscated_boards(self, server_name, opponent_name):
+        board = self.games_initialized[server_name].get_player_board(opponent_name)
         for i in range(0, len(board)):
             for j in range(0, len(board[i])):
                 if board[i][j] == 1:
