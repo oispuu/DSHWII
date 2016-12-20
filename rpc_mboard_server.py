@@ -10,6 +10,7 @@ from time import time
 from xmlrpclib import ServerProxy
 from argparse import ArgumentParser
 import copy
+import tabulate
 
 ___NAME = 'MBoard Client'
 ___VER = '0.2.0.0'
@@ -185,6 +186,18 @@ class MessageBoard():
     def choose_opponents(self, server_name, nickname):
         opponents = copy.deepcopy(self.available_game_servers[server_name])
         return opponents.remove(nickname)
+
+    def validate_shot(self, server_name, nickname, coordX, coordY):
+        board = self.games_initialized[server_name].get_player_board(nickname)
+        if board[coordX-1][coordY] == 1:
+            board[coordX-1][coordY] = "X"
+            print("Hit it!")
+        print("Missed it")
+        for i in range(0,len(board)):
+            for j in range(0,len(board[i])):
+                if board[i][j] == 1:
+                    board[i][j] = 0
+        print(tabulate(board))
 
     def game_active(self, server_name):
         return True if self.games_initialized[server_name] else False
