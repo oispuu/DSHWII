@@ -1,8 +1,3 @@
-'''
-Created on Oct 27, 2016
-
-@author: devel
-'''
 import logging
 from collections import OrderedDict
 
@@ -26,38 +21,16 @@ DEFAULT_SERVER_PORT = 7777
 DEFAULT_SERVER_INET_ADDR = '127.0.0.1'
 
 
-# Private methods -------------------------------------------------------------
+# Private methods
+
 def __info():
     return '%s version %s (%s) %s' % (___NAME, ___VER, ___BUILT, ___VENDOR)
-
-
-# Not a real main method-------------------------------------------------------
 
 def mboard_client_main(args):
     # Starting client
     LOG.info('%s version %s started ...' % (___NAME, ___VER))
     LOG.info('Using %s version %s' % (___NAME, ___VER))
 
-    # Processing arguments
-    # 1.) If -m was provided
-    # m = ''
-    # if len(args.message) > 0:
-    #     m = args.message # Message to publish
-    #     if m == '-':
-    #         LOG.debug('Will read message from standard input ...')
-    #         # Read m from STDIN
-    #         m = stdin.read()
-    #     LOG.debug('User provided message of %d bytes ' % len(m))
-    #
-    # # Processing arguments
-    # # 2.) If -l was provided
-    # # Parse integer
-    # n = int(args.last)  # Last n messages to fetch
-    # n = n if n > 0 else 0 # no negative values allowed
-    # LOG.debug('Will request %s published messages'\
-    #           '' % ('all' if n == 0 else ('last %d' % n)))
-
-    # RPC Server's socket address
     server = (args.host, int(args.port))
     has_joined_game = False
     try:
@@ -111,10 +84,12 @@ def mboard_client_main(args):
                 print 'No game servers available!'
             game_choice = raw_input('Insert server index or press 0 to create a new game server: ')
 
+            # Start a new game a master-player
             if int(game_choice) == 0:
                 server_name = raw_input('What would you like to call the server: ')
                 board_setup = None
 
+                # Specify board dimensions (minimum 5x5 field)
                 board_width = int(raw_input('Enter desired board width (min 5): '))
                 while board_width <= 5:
                     print('Invalid width, try again.')
@@ -125,11 +100,12 @@ def mboard_client_main(args):
                     print('Invalid height, try again.')
                     board_height = int(raw_input('Enter desired board height (min 5): '))
 
-
                 if proxy.create_game_server(server_name, nickname, board_width, board_height):
                     print 'Created new server %s' % str(server_name)
 
                     boats = proxy.get_boats(server_name, nickname)
+
+                    # Place all the boats
                     while boats:
                         selected_boat = raw_input("Select boat type (" + str(boats.keys()) + "): ")
 
@@ -143,30 +119,47 @@ def mboard_client_main(args):
                         elif orientation == "v":
                             orientation = "vertical"
 
-                        start_x = int(raw_input("Select starting X coordinate (1-%s): " % str(board_width)))
-                        while start_x + boats[selected_boat] - 1 > 10 and orientation == "vertical":
+                        # Verify coordinates
+                        start_x = int(raw_input("Select starting X (row) coordinate (1-%s): " % str(board_width)))
+                        while start_x + boats[selected_boat] - 1 > int(board_width) and orientation == "vertical":
                             print("Invalid X coordinate, try again")
-                            start_x = int(raw_input("Select starting X coordinate (1-%s): " % str(board_width)))
+                            start_x = int(raw_input("Select starting X (row) coordinate (1-%s): " % str(board_width)))
 
-                        start_y = int(raw_input("Select starting Y coordinate (1-%s): " % board_height))
-                        while start_y + boats[selected_boat] - 1 > 10 and orientation == "horizontal":
+                        start_y = int(raw_input("Select starting Y (column) coordinate (1-%s): " % board_height))
+                        while start_y + boats[selected_boat] - 1 > int(board_height) and orientation == "horizontal":
                             print("Invalid Y coordinate, try again")
-                            start_y = int(raw_input("Select starting Y coordinate (1-%s): " % str(board_height)))
+                            start_y = int(raw_input("Select starting Y (column) coordinate (1-%s): " % str(board_height)))
+
+                        for i in range(0, boats[selected_boat]):
+                            while orientation == "horizontal" and proxy.get_board(server_name, nickname)[start_x - 1][start_y + i] == 1:
+                                print("Place already taken, try again")
+                                start_x = int(raw_input("Select starting X (row) coordinate (1-%s): " % str(board_width)))
+                                start_y = int(raw_input("Select starting Y (column) coordinate (1-%s): " % str(board_height)))
+
+                        for i in range(0, boats[selected_boat]):
+                            while orientation == "vertical" and proxy.get_board(server_name, nickname)[start_x + i - 1][start_y] == 1:
+                                print("Place already taken, try again")
+                                start_x = int(raw_input("Select starting X (row) coordinate (1-%s): " % str(board_width)))
+                                start_y = int(raw_input("Select starting Y (column) coordinate (1-%s): " % str(board_height)))
 
                         checks_out = False
                         while not checks_out:
                             checks_out = proxy.check_position(server_name, selected_boat, orientation, start_x, start_y)
                             if not checks_out:
                                 print("Place already taken, try again")
-                                start_x = int(raw_input("Select starting X coordinate (1-%s): " % str(board_width)))
-                                start_y = int(raw_input("Select starting Y coordinate (1-%s): " % str(board_height)))
+                                start_x = int(raw_input("Select starting X (row) coordinate (1-%s): " % str(board_width)))
+                                start_y = int(raw_input("Select starting Y (column) coordinate (1-%s): " % str(board_height)))
 
                         if board_setup:
                             board_setup = proxy.set_up_board(server_name, nickname, selected_boat, orientation, start_x, start_y, board_setup)
                         else:
                             board_setup = proxy.set_up_board(server_name, nickname, selected_boat, orientation, start_x,
                                                              start_y)
+
+                        # Print out the board after placing each ship
                         print(tabulate(board_setup))
+
+                        # Remove already placed boats from dictionary
                         del boats[selected_boat]
                     print 'Waiting for other players...'
                     while True:
@@ -190,8 +183,8 @@ def mboard_client_main(args):
                                                 if opponent_choice > len(opponents) - 1 or opponent_choice < 0:
                                                     print 'That is not an option.'
                                                     opponent_choice = None
-                                            coordX = raw_input('Choose X coordinate: ')
-                                            coordY = raw_input('Choose Y coordinate: ')
+                                            coordX = raw_input('Choose X (row) coordinate: ')
+                                            coordY = raw_input('Choose Y (column) coordinate: ')
                                             coordX = int(coordX)
                                             coordY = int(coordY)
 
@@ -220,6 +213,7 @@ def mboard_client_main(args):
                                                 who, board = proxy.hit_by_who(server_name, nickname)
                                                 print 'Your ship was hit by %s' % who
                                                 print(tabulate(board))
+            # Join already existing games
             else:
                 server_name = game_servers.keys()[int(game_choice)-1]
                 join_request = proxy.join_game_server(server_name, nickname)
@@ -229,6 +223,8 @@ def mboard_client_main(args):
 
                     boats = proxy.get_boats(server_name, nickname)
                     board_setup = None
+
+                    # Place all the boats
                     while boats:
                         selected_boat = raw_input("Select boat type (" + str(boats.keys()) + "): ")
 
@@ -242,30 +238,48 @@ def mboard_client_main(args):
                         elif orientation == "v":
                             orientation = "vertical"
 
-                        start_x = int(raw_input("Select starting X coordinate (1-%s): " % str(proxy.get_board_size(server_name)[0])))
+                        # Specify and verify coordinates
+                        start_x = int(raw_input("Select starting X (row) coordinate (1-%s): " % str(proxy.get_board_size(server_name)[0])))
                         while start_x + boats[selected_boat] - 1 > int(proxy.get_board_size(server_name)[0]) and orientation == "vertical":
                             print("Invalid X coordinate, try again")
-                            start_x = int(raw_input("Select starting X coordinate (1-%s): " % str(proxy.get_board_size(server_name)[0])))
+                            start_x = int(raw_input("Select starting X (row) coordinate (1-%s): " % str(proxy.get_board_size(server_name)[0])))
 
-                        start_y = int(raw_input("Select starting Y coordinate (1-%s): " % str(proxy.get_board_size(server_name)[0])))
-                        while start_y + boats[selected_boat] - 1 > int(proxy.get_board_size(server_name)[0]) and orientation == "horizontal":
+                        start_y = int(raw_input("Select starting Y (column) coordinate (1-%s): " % str(proxy.get_board_size(server_name)[1])))
+                        while start_y + boats[selected_boat] - 1 > int(proxy.get_board_size(server_name)[1]) and orientation == "horizontal":
                             print("Invalid Y coordinate, try again")
-                            start_y = int(raw_input("Select starting Y coordinate (1-%s): " % str(proxy.get_board_size(server_name)[0])))
+                            start_y = int(raw_input("Select starting Y (column) coordinate (1-%s): " % str(proxy.get_board_size(server_name)[1])))
+
+                        for i in range(0, boats[selected_boat]):
+                            while orientation == "horizontal" and proxy.get_board(server_name, nickname)[start_x - 1][start_y + i] == 1:
+                                print("Place already taken, try again")
+                                start_x = int(raw_input("Select starting X (row) coordinate (1-%s): " % str(board_width)))
+                                start_y = int(raw_input("Select starting Y (column) coordinate (1-%s): " % str(board_height)))
+
+                        for i in range(0, boats[selected_boat]):
+                            while orientation == "vertical" and proxy.get_board(server_name, nickname)[start_x + i - 1][start_y] == 1:
+                                print("Place already taken, try again")
+                                start_x = int(raw_input("Select starting X (row) coordinate (1-%s): " % str(board_width)))
+                                start_y = int(raw_input("Select starting Y (column) coordinate (1-%s): " % str(board_height)))
+
 
                         checks_out = False
                         while not checks_out:
                             checks_out = proxy.check_position(server_name, selected_boat, orientation, start_x, start_y)
                             if not checks_out:
                                 print("Place already taken, try again")
-                                start_x = int(raw_input("Select starting X coordinate (1-%s): " % str(proxy.get_board_size(server_name)[0])))
-                                start_y = int(raw_input("Select starting Y coordinate (1-%s): " % str(proxy.get_board_size(server_name)[0])))
+                                start_x = int(raw_input("Select starting X (row) coordinate (1-%s): " % str(proxy.get_board_size(server_name)[0])))
+                                start_y = int(raw_input("Select starting Y (column) coordinate (1-%s): " % str(proxy.get_board_size(server_name)[1])))
 
                         if board_setup:
                             board_setup = proxy.set_up_board(server_name, nickname, selected_boat, orientation, start_x, start_y, board_setup)
                         else:
                             board_setup = proxy.set_up_board(server_name, nickname, selected_boat, orientation, start_x,
                                                              start_y)
+
+                        # Print out the board after each placement
                         print(tabulate(board_setup))
+
+                        # Remove placed boat from dictionary
                         del boats[selected_boat]
                     print 'Waiting for game to start'
                     while True:
@@ -273,9 +287,13 @@ def mboard_client_main(args):
                         if game_active:
                             print 'Game is really active'
                             game_started = proxy.poll_game_start(server_name)
+
+                            # Start polling and waiting for game start
                             while not game_started:
                                 sleep(3)
                                 game_started = proxy.poll_game_start(server_name)
+
+                            # Start game
                             print 'Game has started'
                             my_turn, connected, hit = proxy.poll_my_turn(server_name, nickname)
                             while connected:
@@ -296,8 +314,8 @@ def mboard_client_main(args):
                                     if opponent_choice > len(opponents) - 1 or opponent_choice < 0:
                                         print 'That is not an option.'
                                         opponent_choice = None
-                                coordX = raw_input('Choose X coordinate: ')
-                                coordY = raw_input('Choose Y coordinate: ')
+                                coordX = raw_input('Choose X (row) coordinate: ')
+                                coordY = raw_input('Choose Y (column) coordinate: ')
                                 coordX = int(coordX)
                                 coordY = int(coordY)
 

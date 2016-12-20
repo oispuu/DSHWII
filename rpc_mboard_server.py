@@ -10,7 +10,6 @@ from time import time
 from xmlrpclib import ServerProxy
 from argparse import ArgumentParser
 import copy
-import tabulate
 
 ___NAME = 'MBoard Client'
 ___VER = '0.2.0.0'
@@ -218,6 +217,9 @@ class MessageBoard():
 
     def get_board_size(self, server_name):
         return self.games_initialized[server_name].x, self.games_initialized[server_name].y
+
+    def get_board(self, server_name, player):
+        return self.games_initialized[server_name].players[player]
 
     def hit_by_who(self, server_name, player):
         who = self.games_initialized[server_name].notifications[player]
