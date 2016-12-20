@@ -179,14 +179,20 @@ class MessageBoard():
 
     def validate_shot(self, server_name, nickname, coordX, coordY):
         board = self.games_initialized[server_name].get_player_board(nickname)
-        print(tabulate(board))
         if board[coordX-1][coordY] == 1:
             board[coordX-1][coordY] = "X"
             self.games_initialized[server_name].update_player_board(nickname, copy.deepcopy(board))
-            print(tabulate(board))
             return True
         else:
             return False
+
+    def get_obfuscated_boards(self, server_name, nickname):
+        board = self.games_initialized[server_name].get_player_board(nickname)
+        for i in range(0, len(board)):
+            for j in range(0, len(board[i])):
+                if board[i][j] == 1:
+                    board[i][j] = 0
+        return board
 
     def game_active(self, server_name):
         return True if self.games_initialized[server_name] else False
