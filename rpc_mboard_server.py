@@ -179,13 +179,13 @@ class MessageBoard():
 
     def validate_shot(self, server_name, nickname, coordX, coordY):
         board = self.games_initialized[server_name].get_player_board(nickname)
+        print(tabulate(board))
         if board[coordX-1][coordY] == 1:
             board[coordX-1][coordY] = "X"
             self.games_initialized[server_name].update_player_board(nickname, copy.deepcopy(board))
-            print("Hit it")
+            print(tabulate(board))
             return True
         else:
-            print("Missed it")
             return False
 
     def game_active(self, server_name):
