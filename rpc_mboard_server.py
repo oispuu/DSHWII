@@ -177,7 +177,7 @@ class MessageBoard():
         return opponents
 
     def validate_shot(self, me, server_name, nickname, coordX, coordY):
-        board = self.games_initialized[server_name].get_player_board(nickname)
+        board = self.games_initialized[server_name].players[nickname]
         print 'Got board!'
         if board[coordX - 1][coordY] == 1:
             print 'Was hit!'
@@ -195,8 +195,9 @@ class MessageBoard():
     def get_obfuscated_boards(self, server_name, me, opponent):
         available_boards = self.games_initialized[server_name].opponents[me]
         for index in range(0, len(available_boards)):
-            if available_boards[index].keys()[0] == opponent:
-                return available_boards[index].keys()[0]
+            key = available_boards[index].keys()[0]
+            if key == opponent:
+                return available_boards[index][key]
         return False
 
     def player_lost(self, server_name, nickname):
@@ -219,7 +220,12 @@ class MessageBoard():
         return self.games_initialized[server_name].x, self.games_initialized[server_name].y
 
     def hit_by_who(self, server_name, player):
-        return self.games_initialized[server_name].notifications[player], self.games_initialized[server_name].players[player]
+        who = self.games_initialized[server_name].notifications[player]
+        board = self.games_initialized[server_name].players[player]
+
+        del self.games_initialized[server_name].notifications[player]
+
+        return who, board
 
     def next_player(self, server_name, nickname):
         for i in range(0, len(self.available_game_servers[server_name])):

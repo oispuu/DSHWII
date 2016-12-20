@@ -183,27 +183,33 @@ def mboard_client_main(args):
                                         if my_turn:
                                             opponents = proxy.choose_opponents(server_name, nickname)
                                             print str(opponents)
-                                            opponent_choice = False
-                                            while not isinstance(opponent_choice, int):
+                                            opponent_choice = None
+                                            while not opponent_choice == 0 and opponent_choice == None:
                                                 opponent_choice = raw_input('Choose opponent (1-%d)' % len(opponents))
                                                 opponent_choice = int(opponent_choice) - 1
                                                 if opponent_choice > len(opponents) - 1 or opponent_choice < 0:
                                                     print 'That is not an option.'
-                                                    opponent_choice = False
+                                                    opponent_choice = None
                                             coordX = raw_input('Choose X coordinate: ')
                                             coordY = raw_input('Choose Y coordinate: ')
                                             coordX = int(coordX)
                                             coordY = int(coordY)
 
-                                            shot_success = proxy.validate_shot(server_name, nickname, opponent_choice, coordX,
+                                            opponent_choice = opponents[opponent_choice]
+
+                                            print 'Shooting!'
+                                            shot_success = proxy.validate_shot(nickname, server_name, opponent_choice, coordX,
                                                                       coordY)
+
+                                            print 'Shot!'
                                             while shot_success:
                                                 board_stand = proxy.get_obfuscated_boards(server_name, nickname, opponent_choice)
                                                 if board_stand:
                                                     print(tabulate(board_stand))
-                                                shot_success = proxy.validate_shot(server_name, nickname, opponent_choice, coordX, coordY)
+                                                shot_success = proxy.validate_shot(nickname, server_name, opponent_choice, coordX, coordY)
                                             # if proxy.player_lost(server_name, nickname, opponent_choice):
                                             #     print("You have destroyed %s" % str(opponent_choice))
+                                            print 'Next player up'
                                             next_player = proxy.next_players_turn(server_name, nickname)
                                             if next_player:
                                                 my_turn, connected, hit = proxy.poll_my_turn(server_name, nickname)
@@ -283,25 +289,28 @@ def mboard_client_main(args):
                                 print 'My turn'
                                 opponents = proxy.choose_opponents(server_name, nickname)
                                 print str(opponents)
-                                opponent_choice = False
-                                while not opponent_choice:
+                                opponent_choice = None
+                                while not opponent_choice == 0 and opponent_choice == None:
                                     opponent_choice = raw_input('Choose opponent (1-%d)' % len(opponents))
                                     opponent_choice = int(opponent_choice) - 1
                                     if opponent_choice > len(opponents) - 1 or opponent_choice < 0:
                                         print 'That is not an option.'
-                                        opponent_choice = False
+                                        opponent_choice = None
                                 coordX = raw_input('Choose X coordinate: ')
                                 coordY = raw_input('Choose Y coordinate: ')
                                 coordX = int(coordX)
                                 coordY = int(coordY)
 
-                                shot_success = proxy.validate_shot(server_name, nickname, opponent_choice, coordX,
+                                opponent_choice = opponents[opponent_choice]
+
+                                print 'Shooting!'
+                                shot_success = proxy.validate_shot(nickname, server_name, opponent_choice, coordX,
                                                                    coordY)
                                 while shot_success:
                                     board_stand = proxy.get_obfuscated_boards(server_name, nickname, opponent_choice)
                                     if board_stand:
                                         print(tabulate(board_stand))
-                                    shot_success = proxy.validate_shot(server_name, nickname, opponent_choice, coordX,
+                                    shot_success = proxy.validate_shot(nickname, server_name, opponent_choice, coordX,
                                                                        coordY)
                                 # if proxy.player_lost(server_name, nickname, opponent_choice):
                                 #     print("You have destroyed %s" % str(opponent_choice))
