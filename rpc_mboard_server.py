@@ -39,6 +39,8 @@ class Game:
         for row in self.board:
             row[0] = "|"
             row[int(x)+1] = "|"
+        self.x = x
+        self.y = y
 
     # def setUpBoard(self, nick_name, boats, board):
         # boatType = raw_input("Select boat type (" + str(boats.keys()) + "): ")
@@ -212,6 +214,8 @@ class MessageBoard():
     def game_active(self, server_name):
         return True if self.games_initialized[server_name] else False
 
+    def get_board_size(self, server_name):
+        return self.games_initialized[server_name].x, self.games_initialized[server_name].y
 
 # Restrict to a particular path.
 class MboardRequestHandler(SimpleXMLRPCRequestHandler):

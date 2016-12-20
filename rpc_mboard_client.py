@@ -112,8 +112,18 @@ def mboard_client_main(args):
             if int(game_choice) == 0:
                 server_name = raw_input('What would you like to call the server: ')
                 board_setup = None
-                board_width = raw_input('Enter desired board width (min 5): ')
-                board_height = raw_input('Enter desired board height (min 5): ')
+
+                board_width = int(raw_input('Enter desired board width (min 5): '))
+                while board_width <= 5:
+                    print('Invalid width, try again.')
+                    board_width = int(raw_input('Enter desired board width (min 5): '))
+
+                board_height = int(raw_input('Enter desired board height (min 5): '))
+                while board_height <= 5:
+                    print('Invalid height, try again.')
+                    board_height = int(raw_input('Enter desired board height (min 5): '))
+
+
                 if proxy.create_game_server(server_name, nickname, board_width, board_height):
                     print 'Created new server %s' % str(server_name)
 
@@ -131,23 +141,23 @@ def mboard_client_main(args):
                         elif orientation == "v":
                             orientation = "vertical"
 
-                        start_x = int(raw_input("Select starting X coordinate (1-10): "))
+                        start_x = int(raw_input("Select starting X coordinate (1-%s): " % str(board_width)))
                         while start_x + boats[selected_boat] - 1 > 10 and orientation == "vertical":
                             print("Invalid X coordinate, try again")
-                            start_x = int(raw_input("Select starting X coordinate (1-10): "))
+                            start_x = int(raw_input("Select starting X coordinate (1-%s): " % str(board_width)))
 
-                        start_y = int(raw_input("Select starting Y coordinate (1-10): "))
+                        start_y = int(raw_input("Select starting Y coordinate (1-%s): " % board_height))
                         while start_y + boats[selected_boat] - 1 > 10 and orientation == "horizontal":
                             print("Invalid Y coordinate, try again")
-                            start_y = int(raw_input("Select starting Y coordinate (1-10): "))
+                            start_y = int(raw_input("Select starting Y coordinate (1-%s): " % str(board_height)))
 
                         checks_out = False
                         while not checks_out:
                             checks_out = proxy.check_position(server_name, selected_boat, orientation, start_x, start_y)
                             if not checks_out:
                                 print("Place already taken, try again")
-                                start_x = int(raw_input("Select starting X coordinate (1-10): "))
-                                start_y = int(raw_input("Select starting Y coordinate (1-10): "))
+                                start_x = int(raw_input("Select starting X coordinate (1-%s): " % str(board_width)))
+                                start_y = int(raw_input("Select starting Y coordinate (1-%s): " % str(board_height)))
 
                         if board_setup:
                             board_setup = proxy.set_up_board(server_name, nickname, selected_boat, orientation, start_x, start_y, board_setup)
@@ -179,6 +189,8 @@ def mboard_client_main(args):
                                         print("You have destroyed %s" % str(opponent_choice))
             else:
                 server_name = game_servers.keys()[int(game_choice)-1]
+                print(proxy.get_board_size(server_name)[0])
+                print(proxy.get_board_size(server_name)[1])
                 join_request = proxy.join_game_server(server_name, nickname)
                 if join_request:
                     has_joined_game = server_name
@@ -199,23 +211,23 @@ def mboard_client_main(args):
                         elif orientation == "v":
                             orientation = "vertical"
 
-                        start_x = int(raw_input("Select starting X coordinate (1-10): "))
-                        while start_x + boats[selected_boat] - 1 > 10 and orientation == "vertical":
+                        start_x = int(raw_input("Select starting X coordinate (1-%s): " % str(proxy.get_board_size(server_name)[0])))
+                        while start_x + boats[selected_boat] - 1 > int(proxy.get_board_size(server_name)[0]) and orientation == "vertical":
                             print("Invalid X coordinate, try again")
-                            start_x = int(raw_input("Select starting X coordinate (1-10): "))
+                            start_x = int(raw_input("Select starting X coordinate (1-%s): " % str(proxy.get_board_size(server_name)[0])))
 
-                        start_y = int(raw_input("Select starting Y coordinate (1-10): "))
-                        while start_y + boats[selected_boat] - 1 > 10 and orientation == "horizontal":
+                        start_y = int(raw_input("Select starting Y coordinate (1-%s): " % str(proxy.get_board_size(server_name)[0])))
+                        while start_y + boats[selected_boat] - 1 > int(proxy.get_board_size(server_name)[0]) and orientation == "horizontal":
                             print("Invalid Y coordinate, try again")
-                            start_y = int(raw_input("Select starting Y coordinate (1-10): "))
+                            start_y = int(raw_input("Select starting Y coordinate (1-%s): " % str(proxy.get_board_size(server_name)[0])))
 
                         checks_out = False
                         while not checks_out:
                             checks_out = proxy.check_position(server_name, selected_boat, orientation, start_x, start_y)
                             if not checks_out:
                                 print("Place already taken, try again")
-                                start_x = int(raw_input("Select starting X coordinate (1-10): "))
-                                start_y = int(raw_input("Select starting Y coordinate (1-10): "))
+                                start_x = int(raw_input("Select starting X coordinate (1-%s): " % str(proxy.get_board_size(server_name)[0])))
+                                start_y = int(raw_input("Select starting Y coordinate (1-%s): " % str(proxy.get_board_size(server_name)[0])))
 
                         if board_setup:
                             board_setup = proxy.set_up_board(server_name, nickname, selected_boat, orientation, start_x, start_y, board_setup)
