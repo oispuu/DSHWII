@@ -90,18 +90,8 @@ class Game:
     def get_player_board(self, nick_name):
         return self.players[nick_name]
 
-    # def getPlayerList(self):
-    #     playerList = []
-    #     for instance in Player.players:
-    #         playerList.append(instance.name)
-    #     return playerList
-
-    def shootAndValidate(self, player, row, column):
-        enemy = raw_input("Select enemy to shoot: " + str(self.getPlayerList()))
-        row = raw_input("Row: ")
-        column = raw_input("Column: ")
-        player[enemy]
-
+    def update_player_board(self, nick_name, new_board):
+        self.players[nick_name] = new_board
 
 class MessageBoard():
 
@@ -191,13 +181,14 @@ class MessageBoard():
         board = self.games_initialized[server_name].get_player_board(nickname)
         if board[coordX-1][coordY] == 1:
             board[coordX-1][coordY] = "X"
+            self.games_initialized[server_name].update_player_board(nickname, copy.deepcopy(board))
             print("Hit it!")
         print("Missed it")
         for i in range(0,len(board)):
             for j in range(0,len(board[i])):
                 if board[i][j] == 1:
                     board[i][j] = 0
-        print(tabulate(board))
+        return board
 
     def game_active(self, server_name):
         return True if self.games_initialized[server_name] else False
