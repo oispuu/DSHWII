@@ -216,8 +216,6 @@ def mboard_client_main(args):
                                                 print(tabulate(board))
             else:
                 server_name = game_servers.keys()[int(game_choice)-1]
-                print(proxy.get_board_size(server_name)[0])
-                print(proxy.get_board_size(server_name)[1])
                 join_request = proxy.join_game_server(server_name, nickname)
                 if join_request:
                     has_joined_game = server_name
