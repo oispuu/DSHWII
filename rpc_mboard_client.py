@@ -234,7 +234,9 @@ def mboard_client_main(args):
                                 opponents = proxy.choose_opponents(server_name, nickname)
                                 print str(opponents)
                                 opponent_choice = raw_input('Choose opponent (1-%d)' % len(opponents))
-                                # Choose coordinates here
+                                coordX = raw_input('Choose X coordinate: ')
+                                coordY = raw_input('Choose Y coordinate: ')
+                                proxy.validate_shot(server_name, opponent_choice, coordX, coordY)
                 else:
                     print 'Game already has a player with that nickname!'
         except Exception as e:
