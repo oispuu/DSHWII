@@ -106,8 +106,12 @@ class Game:
             return True
 
     def has_been_hit(self, hitter, hittee, board):
-        self.players[hittee] = copy.deepcopy(board)
-        self.notifications[hittee] = hitter
+        if board:
+            self.players[hittee] = copy.deepcopy(board)
+            self.notifications[hittee] = hitter
+        else:
+            self.notifications[hittee] = hitter
+        return True
 
 
 class MessageBoard():
@@ -188,7 +192,7 @@ class MessageBoard():
         return True if server_name in self.active_games.keys() else False
 
     def poll_my_turn(self, server_name, nickname):
-        return self.active_games[server_name] == nickname, nickname in self.available_game_servers[server_name], nickname in self.games_initialized[server_name].keys()
+        return self.active_games[server_name] == nickname, nickname in self.available_game_servers[server_name], nickname in self.games_initialized[server_name].notifications.keys()
 
     def choose_opponents(self, server_name, nickname):
         opponents = copy.deepcopy(self.available_game_servers[server_name])
@@ -203,6 +207,9 @@ class MessageBoard():
             self.games_initialized[server_name].has_been_hit(me, nickname, copy.deepcopy(board))
             return True
         else:
+            board[coordX - 1][coordY] = "M"
+            self.games_initialized[server_name].update_player_board(me, nickname, copy.deepcopy(board))
+            self.games_initialized[server_name].has_been_hit(me, nickname, copy.deepcopy(board))
             return False
 
     def get_obfuscated_boards(self, server_name, me, opponent):

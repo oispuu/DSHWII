@@ -7,7 +7,7 @@ import logging
 from collections import OrderedDict
 
 FORMAT = '%(asctime)-15s %(levelname)s %(message)s'
-logging.basicConfig(level=logging.DEBUG,format=FORMAT)
+logging.basicConfig(level=logging.DEBUG, format=FORMAT)
 LOG = logging.getLogger()
 from argparse import ArgumentParser
 from sys import stdin, exit
@@ -25,16 +25,18 @@ ___VENDOR = 'Copyright (c) 2016 DSLab'
 DEFAULT_SERVER_PORT = 7777
 DEFAULT_SERVER_INET_ADDR = '127.0.0.1'
 
+
 # Private methods -------------------------------------------------------------
 def __info():
     return '%s version %s (%s) %s' % (___NAME, ___VER, ___BUILT, ___VENDOR)
+
+
 # Not a real main method-------------------------------------------------------
 
 def mboard_client_main(args):
-
     # Starting client
     LOG.info('%s version %s started ...' % (___NAME, ___VER))
-    LOG.info('Using %s version %s' % ( ___NAME, ___VER))
+    LOG.info('Using %s version %s' % (___NAME, ___VER))
 
     # Processing arguments
     # 1.) If -m was provided
@@ -56,7 +58,7 @@ def mboard_client_main(args):
     #           '' % ('all' if n == 0 else ('last %d' % n)))
 
     # RPC Server's socket address
-    server = (args.host,int(args.port))
+    server = (args.host, int(args.port))
     has_joined_game = False
     try:
         mm_proxy = ServerProxy("http://%s:%d" % server)
@@ -150,7 +152,8 @@ def mboard_client_main(args):
                                 start_y = int(raw_input("Select starting Y coordinate (1-10): "))
 
                         if board_setup:
-                            board_setup = proxy.set_up_board(server_name, nickname, selected_boat, orientation, start_x, start_y, board_setup)
+                            board_setup = proxy.set_up_board(server_name, nickname, selected_boat, orientation, start_x,
+                                                             start_y, board_setup)
                         else:
                             board_setup = proxy.set_up_board(server_name, nickname, selected_boat, orientation, start_x,
                                                              start_y)
@@ -164,34 +167,46 @@ def mboard_client_main(args):
                         if len(players_ready) >= 3:
                             start = raw_input('Start game? (Y/n): ')
                             if start.lower() == "y":
-                                start = proxy.start_game(server_name,nickname)
+                                start = proxy.start_game(server_name, nickname)
                                 if start:
-                                    my_turn = True
-
-                                    opponents = proxy.choose_opponents(server_name, nickname)
-                                    print str(opponents)
-                                    opponent_choice = False
-                                    while not opponent_choice:
-                                        opponent_choice = raw_input('Choose opponent (1-%d)' % len(opponents))
-                                        opponent_choice = int(opponent_choice) - 1
-                                        if opponent_choice > len(opponents)-1 or opponent_choice < 0:
-                                            print 'That is not an option.'
+                                    my_turn, connected, hit = proxy.poll_my_turn(server_name, nickname)
+                                    while connected:
+                                        if my_turn:
+                                            opponents = proxy.choose_opponents(server_name, nickname)
+                                            print str(opponents)
                                             opponent_choice = False
-                                    coordX = raw_input('Choose X coordinate: ')
-                                    coordY = raw_input('Choose Y coordinate: ')
-                                    coordX = int(coordX)
-                                    coordY = int(coordY)
+                                            while not isinstance(opponent_choice, int):
+                                                opponent_choice = raw_input('Choose opponent (1-%d)' % len(opponents))
+                                                opponent_choice = int(opponent_choice) - 1
+                                                if opponent_choice > len(opponents) - 1 or opponent_choice < 0:
+                                                    print 'That is not an option.'
+                                                    opponent_choice = False
+                                            coordX = raw_input('Choose X coordinate: ')
+                                            coordY = raw_input('Choose Y coordinate: ')
+                                            coordX = int(coordX)
+                                            coordY = int(coordY)
 
-                                    while proxy.validate_shot(server_name, nickname, opponent_choice, coordX, coordY) and \
-                                            not proxy.player_lost(server_name, nickname, opponent_choice):
-                                        board_stand = proxy.get_obfuscated_boards(server_name, opponent_choice)
-                                        if board_stand:
-                                            print(tabulate(board_stand))
-                                        proxy.validate_shot(server_name, opponent_choice, coordX, coordY)
-                                    if proxy.player_lost(server_name, opponent_choice):
-                                        print("You have destroyed %s" % str(opponent_choice))
+                                            shot_success = proxy.validate_shot(server_name, nickname, opponent_choice, coordX,
+                                                                      coordY)
+                                            while shot_success:
+                                                board_stand = proxy.get_obfuscated_boards(server_name, nickname, opponent_choice)
+                                                if board_stand:
+                                                    print(tabulate(board_stand))
+                                                shot_success = proxy.validate_shot(server_name, nickname, opponent_choice, coordX, coordY)
+                                            # if proxy.player_lost(server_name, nickname, opponent_choice):
+                                            #     print("You have destroyed %s" % str(opponent_choice))
+                                            next = proxy.next_players_turn(server_name, nickname)
+                                            if next:
+                                                my_turn, connected, hit = proxy.poll_my_turn(server_name, nickname)
+                                        else:
+                                            sleep(3)
+                                            my_turn, connected, hit = proxy.poll_my_turn(server_name, nickname)
+                                            if hit:
+                                                who, board = proxy.hit_by_who(server_name, nickname)
+                                                print 'Your ship was hit by %s' % who
+                                                print(tabulate(board))
             else:
-                server_name = game_servers.keys()[int(game_choice)-1]
+                server_name = game_servers.keys()[int(game_choice) - 1]
                 join_request = proxy.join_game_server(server_name, nickname)
                 if join_request:
                     has_joined_game = server_name
@@ -231,7 +246,8 @@ def mboard_client_main(args):
                                 start_y = int(raw_input("Select starting Y coordinate (1-10): "))
 
                         if board_setup:
-                            board_setup = proxy.set_up_board(server_name, nickname, selected_boat, orientation, start_x, start_y, board_setup)
+                            board_setup = proxy.set_up_board(server_name, nickname, selected_boat, orientation, start_x,
+                                                             start_y, board_setup)
                         else:
                             board_setup = proxy.set_up_board(server_name, nickname, selected_boat, orientation, start_x,
                                                              start_y)
@@ -247,7 +263,7 @@ def mboard_client_main(args):
                                 sleep(3)
                                 game_started = proxy.poll_game_start(server_name)
                             print 'Game has started'
-                            my_turn, connected = proxy.poll_my_turn(server_name, nickname)
+                            my_turn, connected, hit = proxy.poll_my_turn(server_name, nickname)
                             while connected:
                                 while not my_turn:
                                     sleep(3)
@@ -259,15 +275,29 @@ def mboard_client_main(args):
                                 print 'My turn'
                                 opponents = proxy.choose_opponents(server_name, nickname)
                                 print str(opponents)
-                                opponent_choice = raw_input('Choose opponent (1-%d)' % len(opponents))
+                                opponent_choice = False
+                                while not opponent_choice:
+                                    opponent_choice = raw_input('Choose opponent (1-%d)' % len(opponents))
+                                    opponent_choice = int(opponent_choice) - 1
+                                    if opponent_choice > len(opponents) - 1 or opponent_choice < 0:
+                                        print 'That is not an option.'
+                                        opponent_choice = False
                                 coordX = raw_input('Choose X coordinate: ')
                                 coordY = raw_input('Choose Y coordinate: ')
-                                while proxy.validate_shot(server_name, opponent_choice, coordX, coordY) and \
-                                        not proxy.player_lost(server_name, opponent_choice):
-                                    print(tabulate(proxy.get_obfuscated_boards(server_name, opponent_choice)))
-                                    proxy.validate_shot(server_name, opponent_choice, coordX, coordY)
-                                if proxy.player_lost(server_name, opponent_choice):
-                                    print("You have destroyed %s" % str(opponent_choice))
+                                coordX = int(coordX)
+                                coordY = int(coordY)
+
+                                shot_success = proxy.validate_shot(server_name, nickname, opponent_choice, coordX,
+                                                                   coordY)
+                                while shot_success:
+                                    board_stand = proxy.get_obfuscated_boards(server_name, nickname, opponent_choice)
+                                    if board_stand:
+                                        print(tabulate(board_stand))
+                                    shot_success = proxy.validate_shot(server_name, nickname, opponent_choice, coordX,
+                                                                       coordY)
+                                # if proxy.player_lost(server_name, nickname, opponent_choice):
+                                #     print("You have destroyed %s" % str(opponent_choice))
+                                next = proxy.next_players_turn(server_name, nickname)
 
                 else:
                     print 'Game already has a player with that nickname!'
@@ -279,55 +309,19 @@ def mboard_client_main(args):
     else:
         print 'No servers active, sorry.'
 
-    ids = []
-    msgs = []
-
-    # try:
-    #     if len(m) > 0:
-    #         proxy.publish(m)
-    #         LOG.info('Message published')
-    #     # Query messages
-    #     # With TCP we may get all messages in one request
-    #     ids += proxy.last(n)
-    # except Exception as e:
-    #     LOG.error('Communication error %s ' % str(e))
-    #     exit(1)
-    # except KeyboardInterrupt:
-    #         LOG.debug('Crtrl+C issued ...')
-    #         LOG.info('Terminating ...')
-    #         exit(2)
-    #
-    # try:
-    #     msgs += map(lambda x: proxy.get(x), ids)
-    # except Exception as e:
-    #     LOG.error('Communication error %s ' % str(e))
-    #     exit(1)
-    # except KeyboardInterrupt:
-    #         LOG.debug('Crtrl+C issued ...')
-    #         LOG.info('Terminating ...')
-    #         exit(2)
-    #
-    # msgs = map(lambda x: tuple(x[:3]+[' '.join(x[3:])]),msgs)
-    #
-    # if len(msgs) > 0:
-    #     t_form = lambda x: asctime(localtime(float(x)))
-    #     m_form = lambda x: '%s -> '\
-    #                         '%s' % (t_form(x[0]),x[3])
-    #     print 'Board published messages:'
-    #     print '\n'.join(map(lambda x: m_form(x),msgs))
-
     print 'Terminating ...'
+
 
 if __name__ == '__main__':
     parser = ArgumentParser(description=__info(),
-                            version = ___VER)
-    parser.add_argument('-H','--host',\
-                        help='Server INET address '\
-                        'defaults to %s' % DEFAULT_SERVER_INET_ADDR, \
+                            version=___VER)
+    parser.add_argument('-H', '--host', \
+                        help='Server INET address ' \
+                             'defaults to %s' % DEFAULT_SERVER_INET_ADDR, \
                         default=DEFAULT_SERVER_INET_ADDR)
-    parser.add_argument('-p','--port', type=int,\
-                        help='Server TCP port, '\
-                        'defaults to %d' % DEFAULT_SERVER_PORT, \
+    parser.add_argument('-p', '--port', type=int, \
+                        help='Server TCP port, ' \
+                             'defaults to %d' % DEFAULT_SERVER_PORT, \
                         default=DEFAULT_SERVER_PORT)
     args = parser.parse_args()
     mboard_client_main(args)
