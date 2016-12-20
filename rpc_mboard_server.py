@@ -121,13 +121,17 @@ class MessageBoard():
     def get_boats(self, server_name, player):
         return self.games_initialized[server_name].boats.copy()
 
-    def check_position(self, server_name, boat_type, orientation, start_x, start_y):
+    def check_position(self, server_name, player, boat_type, orientation, start_x, start_y):
         boats = self.games_initialized[server_name].boats.copy()
-        board = copy.deepcopy(self.games_initialized[server_name].board)
+        board = None
+        if player in self.games_initialized[server_name].players.keys():
+            board = copy.deepcopy(self.games_initialized[server_name].players[player])
+        else:
+            board = copy.deepcopy(self.games_initialized[server_name].board)
         for i in range(0, boats[boat_type]):
-            while orientation == "horizontal" and board[start_x - 1][start_y + i] == 1:
+            if orientation == "horizontal" and board[start_x - 1][start_y + i] == 1:
                 return False
-            while orientation == "vertical" and board[start_x + i - 1][start_y] == 1:
+            if orientation == "vertical" and board[start_x + i - 1][start_y] == 1:
                 return False
         return True
 
@@ -196,6 +200,8 @@ class MessageBoard():
         for index in range(0, len(available_boards)):
             key = available_boards[index].keys()[0]
             if key == opponent:
+                for row in range(0, len(available_boards[index][key])):
+                    available_boards[index][key][row] = [0 if x==1 else x for x in available_boards[index][key][row]]
                 return available_boards[index][key]
         return False
 
@@ -219,7 +225,10 @@ class MessageBoard():
         return self.games_initialized[server_name].x, self.games_initialized[server_name].y
 
     def get_board(self, server_name, player):
-        return self.games_initialized[server_name].players[player]
+        if self.games_initialized[server_name].players[player]:
+            return self.games_initialized[server_name].players[player]
+        else:
+            return 1
 
     def hit_by_who(self, server_name, player):
         who = self.games_initialized[server_name].notifications[player]
@@ -232,7 +241,11 @@ class MessageBoard():
     def next_player(self, server_name, nickname):
         for i in range(0, len(self.available_game_servers[server_name])):
             if nickname == self.available_game_servers[server_name][i]:
-                self.active_games[server_name] = self.available_game_servers[server_name][i]
+                print 'Next player up, %s' % self.available_game_servers[server_name][i]
+                if i+1 < len(self.available_game_servers[server_name]):
+                    self.active_games[server_name] = self.available_game_servers[server_name][i+1]
+                else:
+                    self.active_games[server_name] = self.active_games[server_name][0]
         return True
 
 # Restrict to a particular path.
