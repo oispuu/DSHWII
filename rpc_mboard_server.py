@@ -194,6 +194,19 @@ class MessageBoard():
                     board[i][j] = 0
         return board
 
+    def player_lost(self, server_name, nickname):
+        sum = 0
+        board = self.games_initialized[server_name].get_player_board(nickname)
+        for i in range(0, len(board)):
+            for j in range(0, len(board[i])):
+                if board[i][j] == "X":
+                    sum += 1
+        if sum == 17:
+            for player in self.available_game_servers[server_name]:
+                if player == nickname:
+                    self.available_game_servers[server_name].remove(nickname)
+        return sum == 17
+
     def game_active(self, server_name):
         return True if self.games_initialized[server_name] else False
 

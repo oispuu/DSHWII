@@ -169,7 +169,8 @@ def mboard_client_main(args):
                                     opponent_choice = raw_input('Choose opponent (1-%d)' % len(opponents))
                                     coordX = raw_input('Choose X coordinate: ')
                                     coordY = raw_input('Choose Y coordinate: ')
-                                    while proxy.validate_shot(server_name, opponent_choice, coordX, coordY):
+                                    while proxy.validate_shot(server_name, opponent_choice, coordX, coordY) and \
+                                            not proxy.player_lost(server_name, nickname):
                                         print(tabulate(proxy.get_obfuscated_boards(server_name, nickname)))
                                         proxy.validate_shot(server_name, opponent_choice, coordX, coordY)
             else:
@@ -240,9 +241,11 @@ def mboard_client_main(args):
                                 opponent_choice = raw_input('Choose opponent (1-%d)' % len(opponents))
                                 coordX = raw_input('Choose X coordinate: ')
                                 coordY = raw_input('Choose Y coordinate: ')
-                                while proxy.validate_shot(server_name, opponent_choice, coordX, coordY):
-                                    print(tabulate(proxy.get_obfuscated_boards(server_name,nickname)))
+                                while proxy.validate_shot(server_name, opponent_choice, coordX, coordY) and \
+                                        not proxy.player_lost(server_name, nickname):
+                                    print(tabulate(proxy.get_obfuscated_boards(server_name, nickname)))
                                     proxy.validate_shot(server_name, opponent_choice, coordX, coordY)
+
                 else:
                     print 'Game already has a player with that nickname!'
         except Exception as e:
