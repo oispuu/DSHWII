@@ -170,9 +170,11 @@ def mboard_client_main(args):
                                     coordX = raw_input('Choose X coordinate: ')
                                     coordY = raw_input('Choose Y coordinate: ')
                                     while proxy.validate_shot(server_name, opponent_choice, coordX, coordY) and \
-                                            not proxy.player_lost(server_name, nickname):
-                                        print(tabulate(proxy.get_obfuscated_boards(server_name, nickname)))
+                                            not proxy.player_lost(server_name, opponent_choice):
+                                        print(tabulate(proxy.get_obfuscated_boards(server_name, opponent_choice)))
                                         proxy.validate_shot(server_name, opponent_choice, coordX, coordY)
+                                    if proxy.player_lost(server_name, opponent_choice):
+                                        print("You have destroyed %s" % str(opponent_choice))
             else:
                 server_name = game_servers.keys()[int(game_choice)-1]
                 join_request = proxy.join_game_server(server_name, nickname)
@@ -242,9 +244,11 @@ def mboard_client_main(args):
                                 coordX = raw_input('Choose X coordinate: ')
                                 coordY = raw_input('Choose Y coordinate: ')
                                 while proxy.validate_shot(server_name, opponent_choice, coordX, coordY) and \
-                                        not proxy.player_lost(server_name, nickname):
-                                    print(tabulate(proxy.get_obfuscated_boards(server_name, nickname)))
+                                        not proxy.player_lost(server_name, opponent_choice):
+                                    print(tabulate(proxy.get_obfuscated_boards(server_name, opponent_choice)))
                                     proxy.validate_shot(server_name, opponent_choice, coordX, coordY)
+                                if proxy.player_lost(server_name, opponent_choice):
+                                    print("You have destroyed %s" % str(opponent_choice))
 
                 else:
                     print 'Game already has a player with that nickname!'
