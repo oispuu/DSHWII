@@ -26,7 +26,7 @@ def __info():
 
 
 class Game:
-    def __init__(self):
+    def __init__(self,x,y):
         self.boats = {
             "destroyer[2]": 2,
             "submarine[3]": 3,
@@ -34,11 +34,11 @@ class Game:
             "battleship[4]": 4,
             "carrier[5]": 5
         }
-        self.board = [[0 for row in range(12)] for column in range(10)]
+        self.board = [[0 for row in range(int(x)+2)] for column in range(int(y))]
         self.players = {}
         for row in self.board:
             row[0] = "|"
-            row[11] = "|"
+            row[int(x)+1] = "|"
 
     # def setUpBoard(self, nick_name, boats, board):
         # boatType = raw_input("Select boat type (" + str(boats.keys()) + "): ")
@@ -115,10 +115,10 @@ class MessageBoard():
     def get_players_in_session(self, server_name):
         return self.available_game_servers[server_name]
 
-    def create_game_server(self, server_name, player):
+    def create_game_server(self, server_name, player, board_width, board_height):
         # Stupid logic, I have 1 dict for players and another one to identify the game object.
         self.available_game_servers[server_name] = [player]
-        self.games_initialized[server_name] = Game()
+        self.games_initialized[server_name] = Game(board_width,board_height)
         print 'Created a game server %s for player %s' % (server_name, player)
         return True
 
