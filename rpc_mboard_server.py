@@ -182,13 +182,11 @@ class MessageBoard():
         if board[coordX-1][coordY] == 1:
             board[coordX-1][coordY] = "X"
             self.games_initialized[server_name].update_player_board(nickname, copy.deepcopy(board))
-            print("Hit it!")
-        print("Missed it")
-        for i in range(0,len(board)):
-            for j in range(0,len(board[i])):
-                if board[i][j] == 1:
-                    board[i][j] = 0
-        return board
+            print("Hit it")
+            return True
+        else:
+            print("Missed it")
+            return False
 
     def game_active(self, server_name):
         return True if self.games_initialized[server_name] else False
