@@ -177,11 +177,11 @@ class MessageBoard():
         opponents = copy.deepcopy(self.available_game_servers[server_name])
         return opponents.remove(nickname)
 
-    def validate_shot(self, server_name, nickname, coordX, coordY):
-        board = self.games_initialized[server_name].get_player_board(nickname)
+    def validate_shot(self, server_name, opponent_name, coordX, coordY):
+        board = self.games_initialized[server_name].get_player_board(opponent_name)
         if board[coordX-1][coordY] == 1:
             board[coordX-1][coordY] = "X"
-            self.games_initialized[server_name].update_player_board(opponent_name, nickname, copy.deepcopy(board))
+            self.games_initialized[server_name].update_player_board(opponent_name, copy.deepcopy(board))
             return True
         if board[coordX - 1][coordY] == "X":
             return True
