@@ -21,6 +21,7 @@ ___VENDOR = 'Copyright (c) 2016 DSLab'
 DEFAULT_SERVER_PORT = 7778
 DEFAULT_SERVER_INET_ADDR = '127.0.0.1'
 
+
 def __info():
     return '%s version %s (%s) %s' % (___NAME, ___VER, ___BUILT, ___VENDOR)
 
@@ -36,34 +37,36 @@ class Game:
         }
         self.board = [[0 for row in range(12)] for column in range(10)]
         self.players = {}
+        self.opponents = {}
+        self.notifications = {}
         for row in self.board:
             row[0] = "|"
             row[11] = "|"
 
-    # def setUpBoard(self, nick_name, boats, board):
-        # boatType = raw_input("Select boat type (" + str(boats.keys()) + "): ")
-        # orientation = raw_input("Select orientation (horizontal, vertical): ")
-        #
-        # startX = int(raw_input("Select starting X coordinate (1-10): "))
-        # while startX + boats[boatType] - 1 > 10 and orientation == "vertical":
-        #     print("Invalid X coordinate, try again")
-        #     startX = int(raw_input("Select starting X coordinate (1-10): "))
-        #
-        # startY = int(raw_input("Select starting Y coordinate (1-10): "))
-        # while startY + boats[boatType] - 1 > 10 and orientation == "horizontal":
-        #     print("Invalid Y coordinate, try again")
-        #     startY = int(raw_input("Select starting Y coordinate (1-10): "))
-        #
-        # # check if the place is still free
-        # for i in range(0,boats[boatType]):
-        #     while orientation == "horizontal" and board[startX - 1][startY + i] == 1:
-        #         print("Place already taken, try again")
-        #         startX = int(raw_input("Select starting X coordinate (1-10): "))
-        #         startY = int(raw_input("Select starting Y coordinate (1-10): "))
-        #     while orientation == "vertical" and board[startX + i - 1][startY] == 1:
-        #         print("Place already taken, try again")
-        #         startX = int(raw_input("Select starting X coordinate (1-10): "))
-        #         startY = int(raw_input("Select starting Y coordinate (1-10): "))
+            # def setUpBoard(self, nick_name, boats, board):
+            # boatType = raw_input("Select boat type (" + str(boats.keys()) + "): ")
+            # orientation = raw_input("Select orientation (horizontal, vertical): ")
+            #
+            # startX = int(raw_input("Select starting X coordinate (1-10): "))
+            # while startX + boats[boatType] - 1 > 10 and orientation == "vertical":
+            #     print("Invalid X coordinate, try again")
+            #     startX = int(raw_input("Select starting X coordinate (1-10): "))
+            #
+            # startY = int(raw_input("Select starting Y coordinate (1-10): "))
+            # while startY + boats[boatType] - 1 > 10 and orientation == "horizontal":
+            #     print("Invalid Y coordinate, try again")
+            #     startY = int(raw_input("Select starting Y coordinate (1-10): "))
+            #
+            # # check if the place is still free
+            # for i in range(0,boats[boatType]):
+            #     while orientation == "horizontal" and board[startX - 1][startY + i] == 1:
+            #         print("Place already taken, try again")
+            #         startX = int(raw_input("Select starting X coordinate (1-10): "))
+            #         startY = int(raw_input("Select starting Y coordinate (1-10): "))
+            #     while orientation == "vertical" and board[startX + i - 1][startY] == 1:
+            #         print("Place already taken, try again")
+            #         startX = int(raw_input("Select starting X coordinate (1-10): "))
+            #         startY = int(raw_input("Select starting Y coordinate (1-10): "))
 
     def set_up_board(self, nick_name, boat_type, orientation, start_x, start_y, board=None):
         boats = self.boats.copy()
@@ -75,12 +78,12 @@ class Game:
         counter = 0
         if orientation.lower() == "horizontal":
             while counter < size:
-                board[start_x-1][start_y] = 1
+                board[start_x - 1][start_y] = 1
                 start_y += 1
                 counter += 1
         if orientation.lower() == "vertical":
             while counter < size:
-                board[start_x-1][start_y] = 1
+                board[start_x - 1][start_y] = 1
                 start_x += 1
                 counter += 1
         del boats[boat_type]
@@ -90,14 +93,27 @@ class Game:
     def get_player_board(self, nick_name):
         return self.players[nick_name]
 
-    def update_player_board(self, nick_name, new_board):
-        self.players[nick_name] = new_board
+    def update_player_board(self, me, nick_name, new_board):
+        if not me in self.opponents:
+            self.opponents[me] = [{nick_name: new_board}]
+            return True
+        else:
+            for opponent in range(0, len(self.opponents[me])):
+                if self.opponents[me][opponent] == nick_name:
+                    self.opponents[me][opponent] = new_board
+                    return True
+            self.opponents[me].append({nick_name: new_board})
+            return True
+
+    def has_been_hit(self, hitter, hittee, board):
+        self.players[hittee] = copy.deepcopy(board)
+        self.notifications[hittee] = hitter
+
 
 class MessageBoard():
-
     def __init__(self):
-        self.__m_board = {} # For storing published messages
-        self.__m_uuid = 0   # For generating unique iDs
+        self.__m_board = {}  # For storing published messages
+        self.__m_uuid = 0  # For generating unique iDs
         # Holds the players
         self.available_game_servers = {}
         # Holds the game object
@@ -128,7 +144,7 @@ class MessageBoard():
     def check_position(self, server_name, boat_type, orientation, start_x, start_y):
         boats = self.games_initialized[server_name].boats.copy()
         board = copy.deepcopy(self.games_initialized[server_name].board)
-        for i in range(0,boats[boat_type]):
+        for i in range(0, boats[boat_type]):
             while orientation == "horizontal" and board[start_x - 1][start_y + i] == 1:
                 return False
             while orientation == "vertical" and board[start_x + i - 1][start_y] == 1:
@@ -154,10 +170,11 @@ class MessageBoard():
     def start_game(self, server_name, nickname):
         checksum = 0
         for player in self.games_initialized[server_name].players.keys():
-            for num_list in range(0,len(self.games_initialized[server_name].players[player])):
-                checksum += sum([int(x) for x in filter(lambda y: isinstance(y, int) and int(y) == 1, self.games_initialized[server_name].players[player][num_list])])
+            for num_list in range(0, len(self.games_initialized[server_name].players[player])):
+                checksum += sum([int(x) for x in filter(lambda y: isinstance(y, int) and int(y) == 1,
+                                                        self.games_initialized[server_name].players[player][num_list])])
 
-        if checksum == len(self.available_game_servers[server_name])*17:
+        if checksum == len(self.available_game_servers[server_name]) * 17:
             if nickname == self.available_game_servers[server_name][0]:
                 self.active_games[server_name] = self.available_game_servers[server_name][0]
                 return True
@@ -171,49 +188,54 @@ class MessageBoard():
         return True if server_name in self.active_games.keys() else False
 
     def poll_my_turn(self, server_name, nickname):
-        return self.active_games[server_name] == nickname, nickname in self.available_game_servers[server_name]
+        return self.active_games[server_name] == nickname, nickname in self.available_game_servers[server_name], nickname in self.games_initialized[server_name].keys()
 
     def choose_opponents(self, server_name, nickname):
         opponents = copy.deepcopy(self.available_game_servers[server_name])
-        return opponents.remove(nickname)
+        opponents.remove(nickname)
+        return opponents
 
-    def validate_shot(self, server_name, nickname, coordX, coordY):
+    def validate_shot(self, me, server_name, nickname, coordX, coordY):
         board = self.games_initialized[server_name].get_player_board(nickname)
-        if board[coordX-1][coordY] == 1:
-            board[coordX-1][coordY] = "X"
-            self.games_initialized[server_name].update_player_board(nickname, copy.deepcopy(board))
+        if board[coordX - 1][coordY] == 1:
+            board[coordX - 1][coordY] = "X"
+            self.games_initialized[server_name].update_player_board(me, nickname, copy.deepcopy(board))
+            self.games_initialized[server_name].has_been_hit(me, nickname, copy.deepcopy(board))
             return True
         else:
             return False
 
-    def get_obfuscated_boards(self, server_name, nickname):
-        board = self.games_initialized[server_name].get_player_board(nickname)
-        for i in range(0, len(board)):
-            for j in range(0, len(board[i])):
-                if board[i][j] == 1:
-                    board[i][j] = 0
-        return board
+    def get_obfuscated_boards(self, server_name, me, opponent):
+        available_boards = self.games_initialized[server_name].opponents[me]
+        for index in range(0, len(available_boards)):
+            if available_boards[index].keys()[0] == opponent:
+                return available_boards[index].keys()[0]
+        return False
 
     def player_lost(self, server_name, nickname):
-        sum = 0
+        checksum = 0
         board = self.games_initialized[server_name].get_player_board(nickname)
         for i in range(0, len(board)):
             for j in range(0, len(board[i])):
                 if board[i][j] == "X":
-                    sum += 1
-        if sum == 17:
+                    checksum += 1
+        if checksum == 17:
             for player in self.available_game_servers[server_name]:
                 if player == nickname:
                     self.available_game_servers[server_name].remove(nickname)
-        return sum == 17
+        return checksum == 17
 
     def game_active(self, server_name):
         return True if self.games_initialized[server_name] else False
+
+    def hit_by_who(self, server_name, player):
+        return self.games_initialized[server_name].notifications[player], self.games_initialized[server_name].players[player]
 
 
 # Restrict to a particular path.
 class MboardRequestHandler(SimpleXMLRPCRequestHandler):
     rpc_paths = ('/RPC2',)
+
 
 def mboard_server_main(args):
     mboard = MessageBoard()
@@ -223,7 +245,7 @@ def mboard_server_main(args):
 
     # Create XML_server
     server = SimpleXMLRPCServer(server_sock,
-                            requestHandler=MboardRequestHandler)
+                                requestHandler=MboardRequestHandler)
     server.register_introspection_functions()
 
     # get to middleman
@@ -252,20 +274,21 @@ def mboard_server_main(args):
         print 'Ctrl+C issued, terminating ...'
     finally:
         middleman.notify_server_down(server_sock)
-        server.shutdown()       # Stop the serve-forever loop
-        server.server_close()   # Close the sockets
+        server.shutdown()  # Stop the serve-forever loop
+        server.server_close()  # Close the sockets
     print 'Terminating ...'
+
 
 if __name__ == '__main__':
     parser = ArgumentParser(description=__info(),
-                            version = ___VER)
-    parser.add_argument('-H','--host',\
-                        help='Server INET address '\
-                        'defaults to %s' % DEFAULT_SERVER_INET_ADDR, \
+                            version=___VER)
+    parser.add_argument('-H', '--host', \
+                        help='Server INET address ' \
+                             'defaults to %s' % DEFAULT_SERVER_INET_ADDR, \
                         default=DEFAULT_SERVER_INET_ADDR)
-    parser.add_argument('-p','--port', type=int,\
-                        help='Server TCP port, '\
-                        'defaults to %d' % DEFAULT_SERVER_PORT, \
+    parser.add_argument('-p', '--port', type=int, \
+                        help='Server TCP port, ' \
+                             'defaults to %d' % DEFAULT_SERVER_PORT, \
                         default=DEFAULT_SERVER_PORT)
     args = parser.parse_args()
     mboard_server_main(args)

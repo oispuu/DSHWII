@@ -161,17 +161,30 @@ def mboard_client_main(args):
                         players_ready = proxy.get_players_in_session(server_name)
                         if len(players_ready) >= 3:
                             start = raw_input('Start game? (Y/n): ')
-                            if start.lower() == 'y':
+                            if start.lower() == "y":
                                 start = proxy.start_game(server_name,nickname)
                                 if start:
+                                    my_turn = True
+
                                     opponents = proxy.choose_opponents(server_name, nickname)
                                     print str(opponents)
-                                    opponent_choice = raw_input('Choose opponent (1-%d)' % len(opponents))
+                                    opponent_choice = False
+                                    while not opponent_choice:
+                                        opponent_choice = raw_input('Choose opponent (1-%d)' % len(opponents))
+                                        opponent_choice = int(opponent_choice) - 1
+                                        if opponent_choice > len(opponents)-1 or opponent_choice < 0:
+                                            print 'That is not an option.'
+                                            opponent_choice = False
                                     coordX = raw_input('Choose X coordinate: ')
                                     coordY = raw_input('Choose Y coordinate: ')
-                                    while proxy.validate_shot(server_name, opponent_choice, coordX, coordY) and \
-                                            not proxy.player_lost(server_name, opponent_choice):
-                                        print(tabulate(proxy.get_obfuscated_boards(server_name, opponent_choice)))
+                                    coordX = int(coordX)
+                                    coordY = int(coordY)
+
+                                    while proxy.validate_shot(server_name, nickname, opponent_choice, coordX, coordY) and \
+                                            not proxy.player_lost(server_name, nickname, opponent_choice):
+                                        board_stand = proxy.get_obfuscated_boards(server_name, opponent_choice)
+                                        if board_stand:
+                                            print(tabulate(board_stand))
                                         proxy.validate_shot(server_name, opponent_choice, coordX, coordY)
                                     if proxy.player_lost(server_name, opponent_choice):
                                         print("You have destroyed %s" % str(opponent_choice))
@@ -236,7 +249,11 @@ def mboard_client_main(args):
                             while connected:
                                 while not my_turn:
                                     sleep(3)
-                                    my_turn, connected = proxy.poll_my_turn(server_name, nickname)
+                                    my_turn, connected, hit = proxy.poll_my_turn(server_name, nickname)
+                                    if hit:
+                                        who, board = proxy.hit_by_who(server_name, nickname)
+                                        print 'Your ship was hit by %s' % who
+                                        print(tabulate(board))
                                 print 'My turn'
                                 opponents = proxy.choose_opponents(server_name, nickname)
                                 print str(opponents)
