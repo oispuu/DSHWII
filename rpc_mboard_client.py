@@ -162,9 +162,9 @@ def mboard_client_main(args):
                         if len(players_ready) >= 3:
                             start = raw_input('Start game? (Y/n): ')
                             if start.lower() == 'y':
-                                start = proxy.start_game()
+                                start = proxy.start_game(server_name,nickname)
                                 if start:
-                                    opponents = proxy.choose_opponent(server_name, nickname)
+                                    opponents = proxy.choose_opponents(server_name, nickname)
                                     print str(opponents)
                                     opponent_choice = raw_input('Choose opponent (1-%d)' % len(opponents))
                                     # Start choosing coordinates
@@ -231,7 +231,7 @@ def mboard_client_main(args):
                                     sleep(3)
                                     my_turn, connected = proxy.poll_my_turn(server_name, nickname)
                                 print 'My turn'
-                                opponents = proxy.choose_opponent(server_name, nickname)
+                                opponents = proxy.choose_opponents(server_name, nickname)
                                 print str(opponents)
                                 opponent_choice = raw_input('Choose opponent (1-%d)' % len(opponents))
                                 # Choose coordinates here

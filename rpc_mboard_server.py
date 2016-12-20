@@ -111,7 +111,7 @@ class MessageBoard():
         self.available_game_servers = {}
         # Holds the game object
         self.games_initialized = {}
-        self.active_games = []
+        self.active_games = {}
 
     def __get_uuid(self):
         uuid = self.__m_uuid
@@ -162,12 +162,13 @@ class MessageBoard():
 
     def start_game(self, server_name, nickname):
         checksum = 0
-        for player in self.available_game_servers[server_name].players.keys():
-            checksum += sum(self.games_initialized[server_name].players[player])
+        for player in self.games_initialized[server_name].players.keys():
+            for num_list in range(0,len(self.games_initialized[server_name].players[player])):
+                checksum += sum([int(x) for x in filter(lambda y: isinstance(y, int) and int(y) == 1, self.games_initialized[server_name].players[player][num_list])])
 
-        if checksum == len(self.available_game_servers[server_name].players)*17:
+        if checksum == len(self.available_game_servers[server_name])*17:
             if nickname == self.available_game_servers[server_name][0]:
-                self.active_games.append({server_name: self.available_game_servers[server_name][0]})
+                self.active_games[server_name] = self.available_game_servers[server_name][0]
                 return True
             else:
                 print "Error starting game!!"
@@ -176,7 +177,7 @@ class MessageBoard():
             return False
 
     def poll_game_start(self, server_name):
-        return True if self.active_games[server_name] else False
+        return True if server_name in self.active_games.keys() else False
 
     def poll_my_turn(self, server_name, nickname):
         return self.active_games[server_name] == nickname, nickname in self.available_game_servers[server_name]
