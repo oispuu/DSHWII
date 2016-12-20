@@ -42,31 +42,8 @@ class Game:
         for row in self.board:
             row[0] = "|"
             row[int(x)+1] = "|"
-
-            # def setUpBoard(self, nick_name, boats, board):
-            # boatType = raw_input("Select boat type (" + str(boats.keys()) + "): ")
-            # orientation = raw_input("Select orientation (horizontal, vertical): ")
-            #
-            # startX = int(raw_input("Select starting X coordinate (1-10): "))
-            # while startX + boats[boatType] - 1 > 10 and orientation == "vertical":
-            #     print("Invalid X coordinate, try again")
-            #     startX = int(raw_input("Select starting X coordinate (1-10): "))
-            #
-            # startY = int(raw_input("Select starting Y coordinate (1-10): "))
-            # while startY + boats[boatType] - 1 > 10 and orientation == "horizontal":
-            #     print("Invalid Y coordinate, try again")
-            #     startY = int(raw_input("Select starting Y coordinate (1-10): "))
-            #
-            # # check if the place is still free
-            # for i in range(0,boats[boatType]):
-            #     while orientation == "horizontal" and board[startX - 1][startY + i] == 1:
-            #         print("Place already taken, try again")
-            #         startX = int(raw_input("Select starting X coordinate (1-10): "))
-            #         startY = int(raw_input("Select starting Y coordinate (1-10): "))
-            #     while orientation == "vertical" and board[startX + i - 1][startY] == 1:
-            #         print("Place already taken, try again")
-            #         startX = int(raw_input("Select starting X coordinate (1-10): "))
-            #         startY = int(raw_input("Select starting Y coordinate (1-10): "))
+        self.x = x
+        self.y = y
 
     def set_up_board(self, nick_name, boat_type, orientation, start_x, start_y, board=None):
         boats = self.boats.copy()
@@ -237,6 +214,9 @@ class MessageBoard():
 
     def game_active(self, server_name):
         return True if self.games_initialized[server_name] else False
+
+    def get_board_size(self, server_name):
+        return self.games_initialized[server_name].x, self.games_initialized[server_name].y
 
     def hit_by_who(self, server_name, player):
         return self.games_initialized[server_name].notifications[player], self.games_initialized[server_name].players[player]
