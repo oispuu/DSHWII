@@ -252,14 +252,14 @@ def mboard_client_main(args):
                         for i in range(0, boats[selected_boat]):
                             while orientation == "horizontal" and proxy.get_board(server_name, nickname)[start_x - 1][start_y + i] == 1:
                                 print("Place already taken, try again")
-                                start_x = int(raw_input("Select starting X (row) coordinate (1-%s): " % str(board_width)))
-                                start_y = int(raw_input("Select starting Y (column) coordinate (1-%s): " % str(board_height)))
+                                start_x = int(raw_input("Select starting X (row) coordinate (1-%s): " % str(proxy.get_board_size(server_name)[0])))
+                                start_y = int(raw_input("Select starting Y (column) coordinate (1-%s): " % str(proxy.get_board_size(server_name)[1])))
 
                         for i in range(0, boats[selected_boat]):
                             while orientation == "vertical" and proxy.get_board(server_name, nickname)[start_x + i - 1][start_y] == 1:
                                 print("Place already taken, try again")
-                                start_x = int(raw_input("Select starting X (row) coordinate (1-%s): " % str(board_width)))
-                                start_y = int(raw_input("Select starting Y (column) coordinate (1-%s): " % str(board_height)))
+                                start_x = int(raw_input("Select starting X (row) coordinate (1-%s): " % str(proxy.get_board_size(server_name)[0])))
+                                start_y = int(raw_input("Select starting Y (column) coordinate (1-%s): " % str(proxy.get_board_size(server_name)[1])))
 
 
                         checks_out = False
