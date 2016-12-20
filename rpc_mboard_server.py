@@ -201,12 +201,15 @@ class MessageBoard():
 
     def validate_shot(self, me, server_name, nickname, coordX, coordY):
         board = self.games_initialized[server_name].get_player_board(nickname)
+        print 'Got board!'
         if board[coordX - 1][coordY] == 1:
+            print 'Was hit!'
             board[coordX - 1][coordY] = "X"
             self.games_initialized[server_name].update_player_board(me, nickname, copy.deepcopy(board))
             self.games_initialized[server_name].has_been_hit(me, nickname, copy.deepcopy(board))
             return True
         else:
+            print 'Miss!'
             board[coordX - 1][coordY] = "M"
             self.games_initialized[server_name].update_player_board(me, nickname, copy.deepcopy(board))
             self.games_initialized[server_name].has_been_hit(me, nickname, copy.deepcopy(board))
@@ -238,6 +241,11 @@ class MessageBoard():
     def hit_by_who(self, server_name, player):
         return self.games_initialized[server_name].notifications[player], self.games_initialized[server_name].players[player]
 
+    def next_player(self, server_name, nickname):
+        for i in range(0, len(self.available_game_servers[server_name])):
+            if nickname == self.available_game_servers[server_name][i]:
+                self.active_games[server_name] = self.available_game_servers[server_name][i]
+        return True
 
 # Restrict to a particular path.
 class MboardRequestHandler(SimpleXMLRPCRequestHandler):

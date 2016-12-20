@@ -195,8 +195,8 @@ def mboard_client_main(args):
                                                 shot_success = proxy.validate_shot(server_name, nickname, opponent_choice, coordX, coordY)
                                             # if proxy.player_lost(server_name, nickname, opponent_choice):
                                             #     print("You have destroyed %s" % str(opponent_choice))
-                                            next = proxy.next_players_turn(server_name, nickname)
-                                            if next:
+                                            next_player = proxy.next_players_turn(server_name, nickname)
+                                            if next_player:
                                                 my_turn, connected, hit = proxy.poll_my_turn(server_name, nickname)
                                         else:
                                             sleep(3)
