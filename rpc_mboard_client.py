@@ -112,7 +112,9 @@ def mboard_client_main(args):
             if int(game_choice) == 0:
                 server_name = raw_input('What would you like to call the server: ')
                 board_setup = None
-                if proxy.create_game_server(server_name, nickname):
+                board_width = raw_input('Enter desired board width (min 5): ')
+                board_height = raw_input('Enter desired board height (min 5): ')
+                if proxy.create_game_server(server_name, nickname, board_width, board_height):
                     print 'Created new server %s' % str(server_name)
 
                     boats = proxy.get_boats(server_name, nickname)
